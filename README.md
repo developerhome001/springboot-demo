@@ -43,3 +43,32 @@ spring:
 @ComponentScan(value = "com.keray.common")
 class Main {}
 ```
+### 不需要mybatis-plus时
+```xml
+<exclusion>
+    <groupId>org.mybatis</groupId>
+    <artifactId>mybatis-spring</artifactId>
+</exclusion>
+<exclusion>
+    <groupId>com.baomidou</groupId>
+    <artifactId>mybatis-plus-boot-starter</artifactId>
+</exclusion>
+```
+### 不需要redis时
+```xml
+<exclusion>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</exclusion>
+<exclusion>
+    <groupId>org.redisson</groupId>
+    <artifactId>redisson-spring-boot-starter</artifactId>
+</exclusion>
+```
+### 不需要mongo时
+```xml
+<exclusion>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-mongodb</artifactId>
+</exclusion>
+```
