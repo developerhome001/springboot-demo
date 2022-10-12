@@ -26,7 +26,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.keray.main</groupId>
+            <groupId>com.keray.spring</groupId>
             <artifactId>common-boot</artifactId>
         </dependency>
         <dependency>

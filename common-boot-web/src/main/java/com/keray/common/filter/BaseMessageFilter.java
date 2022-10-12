@@ -1,7 +1,6 @@
 package com.keray.common.filter;
 
 import cn.hutool.core.util.StrUtil;
-import com.keray.common.IContext;
 import com.keray.common.IUserContext;
 import com.keray.common.util.HttpWebUtil;
 import com.keray.common.utils.UUIDUtil;

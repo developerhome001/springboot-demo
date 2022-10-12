@@ -43,13 +43,13 @@
             </dependency>
 
             <dependency>
-                <groupId>com.keray.main</groupId>
+                <groupId>com.keray.spring</groupId>
                 <artifactId>common-boot</artifactId>
                 <version>1.0.0</version>
             </dependency>
 
             <dependency>
-                <groupId>com.keray.main</groupId>
+                <groupId>com.keray.spring</groupId>
                 <artifactId>common-boot-web</artifactId>
                 <version>1.0.0</version>
             </dependency>

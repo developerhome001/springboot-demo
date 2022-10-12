@@ -4,7 +4,8 @@ keray:
   schedule: 
     open: true # 定时任务配置
     namespace: dev #空间名
-  api: 
+  api:
+    rate-limit: true #开启接口令牌桶限流 默认开启 需要注入redis
     json: 
       open: true # json解析
       global-switch: # 全局开启json解析

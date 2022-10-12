@@ -5,12 +5,14 @@ import com.keray.common.qps.RateLimiter;
 import com.keray.common.qps.RateLimiterStore;
 import com.keray.common.qps.RedisRateLimiterStore;
 import com.keray.common.qps.RejectStrategy;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import javax.annotation.Resource;
 
 @Configuration
+@ConditionalOnBean(RedisTemplate.class)
 public class RateLimiterBean {
 
     @Resource
