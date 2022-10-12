@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.keray.spring</groupId>
+    <artifactId>spring-web-common</artifactId>
+
+    <version>1.0.0</version>
+
+    <name>spring-web-common</name>
+    <packaging>pom</packaging>
+
+
+
+    <modules>
+        <module>common-boot</module>
+        <module>common-boot-web</module>
+        <module>common-plugins</module>
+    </modules>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <boot-version>2.6.3</boot-version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${boot-version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2021.0.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.keray.main</groupId>
+                <artifactId>common-boot</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.keray.main</groupId>
+                <artifactId>common-boot-web</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.80</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.7.22</version>
+        </dependency>
+
+    </dependencies>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>keray-snapshots</id>
+            <url>https://packages.aliyun.com/maven/repository/2010881-snapshot-JFQB6y/</url>
+        </snapshotRepository>
+        <repository>
+            <id>keray-releases</id>
+            <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>
+        </repository>
+    </distributionManagement>
+
+</project>
