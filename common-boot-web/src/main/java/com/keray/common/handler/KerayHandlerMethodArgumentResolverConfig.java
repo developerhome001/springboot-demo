@@ -9,7 +9,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.HandlerMethodArgumentResolverComposite;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
@@ -19,7 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class KerayHandlerMethodArgumentResolverConfig implements HandlerMethodArgumentResolver, ApplicationContextAware {
+public class KerayHandlerMethodArgumentResolverConfig implements KerayHandlerMethodArgumentResolver, ApplicationContextAware {
 
 
     private final RequestMappingHandlerAdapter adapter;
@@ -41,15 +40,16 @@ public class KerayHandlerMethodArgumentResolverConfig implements HandlerMethodAr
 
 
     @Override
-    public boolean supportsParameter(MethodParameter parameter) {
+    public boolean supportsParameter(MethodParameter parameter, NativeWebRequest webRequest, Map<Object, Object> threadLocal) {
         return true;
     }
 
+
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory, Map<Object, Object> threadLocal) throws Exception {
         for (var resolver : kerayArgumentResolvers) {
-            if (resolver.supportsParameter(parameter, webRequest)) {
-                return argCheck(parameter, resolver.resolveArgument(parameter, mavContainer, webRequest, binderFactory));
+            if (resolver.supportsParameter(parameter, webRequest, threadLocal)) {
+                return argCheck(parameter, resolver.resolveArgument(parameter, mavContainer, webRequest, binderFactory, threadLocal));
             }
         }
         return argCheck(parameter, resolverComposite.resolveArgument(parameter, mavContainer, webRequest, binderFactory));
@@ -112,5 +112,10 @@ public class KerayHandlerMethodArgumentResolverConfig implements HandlerMethodAr
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
+    }
+
+    @Override
+    public int getOrder() {
+        return 0;
     }
 }

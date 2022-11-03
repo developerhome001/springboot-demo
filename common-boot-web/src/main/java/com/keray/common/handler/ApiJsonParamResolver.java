@@ -3,8 +3,11 @@ package com.keray.common.handler;
 import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.keray.common.KerayHandlerMethodArgumentResolver;
 import com.keray.common.annotation.ApiJsonParam;
+import com.keray.common.utils.CommonUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +26,10 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,12 +44,7 @@ import java.util.Map;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name = "keray.api.json.open", havingValue = "true")
 @ConfigurationProperties(value = "keray.api.json", ignoreInvalidFields = true)
-public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor implements HandlerInterceptor, KerayHandlerMethodArgumentResolver {
-
-    /**
-     * request缓存
-     */
-    private final ThreadLocal<ServletWebRequest> cache = new ThreadLocal<>();
+public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor implements KerayHandlerMethodArgumentResolver {
 
     private final HandlerMethodArgumentResolverComposite resolverComposite;
 
@@ -54,6 +54,9 @@ public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor imp
     @Setter
     @Getter
     private Boolean globalSwitch = true;
+
+    @Resource(name = "kObjectMapper")
+    private ObjectMapper objectMapper;
 
     private static final String ROOT_JSON_KEY = "root-json-key";
 
@@ -66,30 +69,49 @@ public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor imp
 
 
     @Override
-    public boolean supportsParameter(MethodParameter parameter, NativeWebRequest webRequest) {
-        HttpServletRequest httpServletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
-        if (httpServletRequest == null || "GET".equals(httpServletRequest.getMethod()) ||
+    public boolean supportsParameter(MethodParameter parameter, NativeWebRequest webRequest, Map<Object, Object> threadLocal) {
+        var key = ApiJsonParamResolver.class + "supportsParameter";
+        if (threadLocal.containsKey(key)) return Boolean.TRUE.equals(threadLocal.get(key));
+        var httpServletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
+        boolean result = !(httpServletRequest == null || "GET".equals(httpServletRequest.getMethod()) ||
                 httpServletRequest.getContentType() == null ||
-                !httpServletRequest.getContentType().contains(MediaType.APPLICATION_JSON_VALUE))
-            return false;
-        ApiJsonParam apiJsonParam = parameter.getMethodAnnotation(ApiJsonParam.class);
-        // 对于RequestBody注解的方法不做处理
-        if (globalSwitch) {
-            if (apiJsonParam != null) {
-                return apiJsonParam.value() && parameter.getParameterAnnotation(RequestBody.class) == null;
+                !httpServletRequest.getContentType().contains(MediaType.APPLICATION_JSON_VALUE));
+        if (result) {
+            var apiJsonParam = parameter.getMethodAnnotation(ApiJsonParam.class);
+            if (apiJsonParam == null && parameter.getMethod() != null) {
+                apiJsonParam = CommonUtil.getClassAllAnnotation(parameter.getMethod().getDeclaringClass(), ApiJsonParam.class);
             }
-            return parameter.getParameterAnnotation(RequestBody.class) == null;
-        } else {
-            return apiJsonParam != null && apiJsonParam.value() && parameter.getParameterAnnotation(RequestBody.class) == null;
+            var haveBody = false;
+            if (parameter.getMethod() != null) {
+                all:
+                for (Annotation[] anis : parameter.getMethod().getParameterAnnotations()) {
+                    for (Annotation ani : anis) {
+                        haveBody = ani.annotationType() == RequestBody.class;
+                        if (haveBody) break all;
+                    }
+                }
+            }
+            // 对于RequestBody注解的方法不做处理
+            if (globalSwitch) {
+                if (apiJsonParam != null) {
+                    result = apiJsonParam.value() && parameter.getParameterAnnotation(RequestBody.class) == null;
+                } else {
+                    result = !haveBody;
+                }
+            } else {
+                result = !haveBody && apiJsonParam != null && apiJsonParam.value();
+            }
         }
+        threadLocal.put(key, result);
+        return result;
     }
 
     @Override
-    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory, Map<Object, Object> threadLocal) throws Exception {
         HttpServletRequest httpServletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
         // 仅当content-type为app/json时 处理 其他情况走原有的处理
         all:
-        if (cache.get() == null) {
+        if (threadLocal.get(this.getClass()) == null) {
             MethodParameter mapParam = new MethodParameter(parameter) {
                 // 重写为了将body的json字符串转换为map对象
                 @Override
@@ -123,25 +145,29 @@ public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor imp
                                 if (ClassUtil.isSimpleValueType(s.getClass())) {
                                     return s.toString();
                                 }
-                                return JSON.toJSONString(s);
+                                try {
+                                    return objectMapper.writeValueAsString(s);
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
                             }).toArray(String[]::new));
                 }
                 // 处理对象类型 数组类型
                 else if (entry.getValue() instanceof Map) {
                     // 将map转换为json放到[0]
-                    paramMap.put(entry.getKey(), new String[]{JSON.toJSONString(entry.getValue())});
+                    paramMap.put(entry.getKey(), new String[]{objectMapper.writeValueAsString(entry.getValue())});
                 } else {
                     log.warn("无法解析复杂类型 value={},class={}", entry.getValue(), entry.getValue().getClass());
                 }
             }
             // 保留一份原始的json
-            paramMap.put(ROOT_JSON_KEY, new String[]{JSON.toJSONString(data)});
+            paramMap.put(ROOT_JSON_KEY, new String[]{objectMapper.writeValueAsString(data)});
             ServletWebRequest servletWebRequest = new ServletWebRequest(new IHttpServletRequest(httpServletRequest),
                     (HttpServletResponse) webRequest.getNativeResponse());
             servletWebRequest.getParameterMap().putAll(paramMap);
-            cache.set(servletWebRequest);
+            threadLocal.put(this.getClass(), servletWebRequest);
         }
-        webRequest = cache.get();
+        webRequest = (NativeWebRequest) threadLocal.get(this.getClass());
         // 处理对象类型
         ModelAttribute attribute = parameter.getParameterAnnotation(ModelAttribute.class);
         if (attribute != null) {
@@ -177,12 +203,6 @@ public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor imp
 
         return resolverComposite.resolveArgument(parameter, mavContainer, webRequest, binderFactory);
     }
-
-    @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-        cache.remove();
-    }
-
 
     @Override
     public int getOrder() {

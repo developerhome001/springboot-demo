@@ -2,6 +2,8 @@ package com.keray.common.keray;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.keray.common.Result;
 import com.keray.common.ServletInvocableHandlerMethodCallback;
 import com.keray.common.ServletInvocableHandlerMethodHandler;
@@ -20,6 +22,8 @@ import org.springframework.core.MethodParameter;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
+import javax.annotation.Resource;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.util.function.Consumer;
@@ -32,6 +36,9 @@ import java.util.function.Consumer;
 @Configuration
 @ConfigurationProperties(prefix = "keray.api.log")
 public class ApiLogServletInvocableHandlerMethodHandler implements ServletInvocableHandlerMethodHandler {
+
+    @Resource(name = "kObjectMapper")
+    private ObjectMapper objectMapper;
 
     @Getter
     @Setter
@@ -90,7 +97,7 @@ public class ApiLogServletInvocableHandlerMethodHandler implements ServletInvoca
         }
     }
 
-    private void apiLog(boolean fail, Object result, String url, String flag, Object[] args, MethodParameter[] parameters, long start, HandlerMethod handlerMethod) {
+    private void apiLog(boolean fail, Object result, String url, String flag, Object[] args, MethodParameter[] parameters, long start, HandlerMethod handlerMethod) throws JsonProcessingException {
         StringBuilder builder = new StringBuilder();
         if (fail) {
             builder.append(System.lineSeparator()).append("============接口异常============").append(System.lineSeparator());
@@ -102,8 +109,13 @@ public class ApiLogServletInvocableHandlerMethodHandler implements ServletInvoca
         builder.append("  args:").append(System.lineSeparator());
         for (int i = 0; i < parameters.length; i++) {
             String json = "json解析失败";
+            var item = args[i];
             try {
-                json = args[i] == null ? null : JSON.toJSONString(args[i]);
+                if (item instanceof ServletResponse) {
+                    json = item.toString();
+                } else {
+                    json = args[i] == null ? null : objectMapper.writeValueAsString(item);
+                }
             } catch (Exception ignore) {
             }
             builder.append(parameters[i].getParameterName()).append("=").append(json).append(System.lineSeparator());
@@ -111,7 +123,7 @@ public class ApiLogServletInvocableHandlerMethodHandler implements ServletInvoca
         if (result instanceof Result.FailResult) {
             builder.append("result:").append(StrUtil.format("code={},message={}", ((Result) result).getCode(), ((Result.FailResult) result).getMessage())).append(System.lineSeparator());
         } else if (result instanceof Result.SuccessResult) {
-            builder.append("result:").append(JSON.toJSONString(((Result.SuccessResult) result).getData())).append(System.lineSeparator());
+            builder.append("result:").append(objectMapper.writeValueAsString(((Result.SuccessResult) result).getData())).append(System.lineSeparator());
         } else if (result == null) {
             builder.append("result:NULL").append(System.lineSeparator());
         } else {
