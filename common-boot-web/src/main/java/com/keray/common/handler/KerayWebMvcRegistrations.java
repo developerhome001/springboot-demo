@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -22,7 +23,7 @@ import java.util.LinkedList;
 public class KerayWebMvcRegistrations implements WebMvcRegistrations, BeanPostProcessor {
 
 
-    private ServletInvocableHandlerMethodHandler[] handlers = new ServletInvocableHandlerMethodHandler[]{};
+    ArrayList<ServletInvocableHandlerMethodHandler> handlers = new ArrayList(8);
 
     @Resource
     private ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory;
@@ -32,11 +33,8 @@ public class KerayWebMvcRegistrations implements WebMvcRegistrations, BeanPostPr
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         var clazz = ProxyUtils.getUserClass(bean);
         if (ServletInvocableHandlerMethodHandler.class.isAssignableFrom(clazz)) {
-            var list = new LinkedList<>(Arrays.asList(handlers));
-            list.add((ServletInvocableHandlerMethodHandler) bean);
-            var array = list.toArray(new ServletInvocableHandlerMethodHandler[]{});
-            Arrays.sort(array, Comparator.comparing(ServletInvocableHandlerMethodHandler::getOrder));
-            handlers = array;
+            handlers.add((ServletInvocableHandlerMethodHandler) bean);
+            handlers.sort(Comparator.comparing(ServletInvocableHandlerMethodHandler::getOrder));
         }
         return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);
     }

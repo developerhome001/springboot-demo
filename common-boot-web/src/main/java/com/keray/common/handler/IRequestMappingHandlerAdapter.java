@@ -6,12 +6,17 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod;
 
+import java.util.ArrayList;
+
 public class IRequestMappingHandlerAdapter extends RequestMappingHandlerAdapter {
 
     private final ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory;
-    private final ServletInvocableHandlerMethodHandler[] handlers;
 
-    public IRequestMappingHandlerAdapter(ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory, ServletInvocableHandlerMethodHandler[] handlers) {
+    private final ArrayList<ServletInvocableHandlerMethodHandler> handlers;
+
+    private volatile ServletInvocableHandlerMethodHandler[] cache = null;
+
+    public IRequestMappingHandlerAdapter(ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory, ArrayList<ServletInvocableHandlerMethodHandler> handlers) {
         this.servletInvocableHandlerMethodFactory = servletInvocableHandlerMethodFactory;
         this.handlers = handlers;
     }
@@ -23,7 +28,10 @@ public class IRequestMappingHandlerAdapter extends RequestMappingHandlerAdapter 
 
     @Override
     protected ServletInvocableHandlerMethod createInvocableHandlerMethod(HandlerMethod handlerMethod) {
-        return servletInvocableHandlerMethodFactory.create(handlerMethod, handlers);
+        if (cache == null) {
+            cache = handlers.toArray(new ServletInvocableHandlerMethodHandler[0]);
+        }
+        return servletInvocableHandlerMethodFactory.create(handlerMethod, cache);
     }
 
 
