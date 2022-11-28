@@ -2,7 +2,7 @@ package com.demo;
 
 
 import com.keray.common.annotation.ApiResult;
-import com.keray.common.lock.RedissonConfig;
+import com.keray.common.sms.AliyunSmsPlugins;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +15,7 @@ import javax.annotation.Resource;
 public class Main {
 
     @Resource
-    private RedissonConfig redissonConfig;
+    private AliyunSmsPlugins plugins;
 
     public static void main(String[] args) {
         System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "200");

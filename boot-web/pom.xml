@@ -9,9 +9,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>common-boot-web</artifactId>
+    <artifactId>boot-web</artifactId>
 
-    <name>common-boot-web</name>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -29,7 +28,7 @@
 
         <dependency>
             <groupId>com.keray.spring</groupId>
-            <artifactId>common-boot</artifactId>
+            <artifactId>boot</artifactId>
         </dependency>
         <dependency>
             <groupId>org.javassist</groupId>

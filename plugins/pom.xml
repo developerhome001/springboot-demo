@@ -8,14 +8,12 @@
         <groupId>com.keray.spring</groupId>
         <version>1.0.0</version>
     </parent>
-    <artifactId>common-plugins</artifactId>
-
-    <name>plugins</name>
+    <artifactId>plugins</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.keray.spring</groupId>
-            <artifactId>common-boot</artifactId>
+            <artifactId>boot</artifactId>
         </dependency>
         <dependency>
             <groupId>com.aliyun.oss</groupId>

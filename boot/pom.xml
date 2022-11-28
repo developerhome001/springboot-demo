@@ -9,10 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>common-boot</artifactId>
+    <artifactId>boot</artifactId>
 
     <packaging>jar</packaging>
-    <name>common-boot</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

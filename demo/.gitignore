@@ -32,3 +32,4 @@ target/
 *.log
 /log/
 application-conf.yml
+application-plugins.yml

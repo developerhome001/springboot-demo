@@ -1,4 +1,4 @@
-package com.keray.common;
+package com.keray.common.argcheck;
 
 import com.keray.common.resolver.ApiJsonParamResolver;
 import org.springframework.core.MethodParameter;

@@ -8,15 +8,13 @@
 
     <version>1.0.0</version>
 
-    <name>spring-web-common</name>
     <packaging>pom</packaging>
 
 
-
     <modules>
-        <module>common-boot</module>
-        <module>common-boot-web</module>
-        <module>common-plugins</module>
+        <module>boot</module>
+        <module>boot-web</module>
+        <module>plugins</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -44,13 +42,18 @@
 
             <dependency>
                 <groupId>com.keray.spring</groupId>
-                <artifactId>common-boot</artifactId>
+                <artifactId>boot</artifactId>
                 <version>1.0.0</version>
             </dependency>
 
             <dependency>
                 <groupId>com.keray.spring</groupId>
-                <artifactId>common-boot-web</artifactId>
+                <artifactId>boot-web</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.keray.spring</groupId>
+                <artifactId>plugins</artifactId>
                 <version>1.0.0</version>
             </dependency>
 
