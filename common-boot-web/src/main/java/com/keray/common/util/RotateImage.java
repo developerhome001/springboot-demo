@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.keray.common.SpringContextHolder;
-import com.keray.common.utils.DigesterUtil;
 import com.keray.common.utils.ImageCode;
 import org.springframework.data.redis.core.RedisTemplate;
 

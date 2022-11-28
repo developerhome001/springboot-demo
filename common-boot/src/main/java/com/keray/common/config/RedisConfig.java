@@ -64,37 +64,16 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisMessageListenerContainer container(RedisConnectionFactory redisConnectionFactory,
-                                                   MessageListenerAdapter listenerAdapter) {
-
-        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(redisConnectionFactory);
-        container.addMessageListener(listenerAdapter, new PatternTopic("chat"));
-
-        return container;
-    }
-
-
-    @Bean
-    MessageListenerAdapter listenerAdapter(Receiver receiver) {
-        return new MessageListenerAdapter(receiver, "receiveMessage");
-    }
-
-    @Bean
-    Receiver receiver() {
-        return new Receiver(new CountDownLatch(1));
-    }
-
-
-    @Bean
     @Primary
-    public RedisTemplate redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate redisTemplate(RedisConnectionFactory redisConnectionFactory, RedisProperties redisProperties) {
+        log.info("注入redis基础库：{}", redisProperties.getDatabase());
         return redisTemplateFactory(redisConnectionFactory);
     }
 
 
     @Bean(name = "cacheRedisRedisTemplate")
     public RedisTemplate cacheRedisRedisTemplate(RedisProperties redisProperties) {
+        log.info("注入redis缓存库：{}", cacheDb);
         return redisTemplateFactory(redisProperties, cacheDb);
     }
 
@@ -112,6 +91,7 @@ public class RedisConfig {
      */
     @Bean(name = "persistenceRedisTemplate")
     public RedisTemplate persistenceRedisTemplate(RedisProperties redisProperties) {
+        log.info("注入redis持久库：{}", importantDb);
         return redisTemplateFactory(redisProperties, importantDb);
     }
 
@@ -195,26 +175,11 @@ public class RedisConfig {
         //使用Jackson2JsonRedisSerializer来序列化和反序列化redis的value值（默认使用JDK的序列化方式）
         // 指定要序列化的域，field,get和set,以及修饰符范围，ANY是都有包括private和public
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        objectMapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+        objectMapper.activateDefaultTyping(objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
         //LocalDateTime系列序列化和反序列化模块，继承自jsr310，我们在这里修改了日期格式
         JavaTimeModule javaTimeModule = javaModule();
         objectMapper.registerModule(javaTimeModule);
         return objectMapper;
     }
-
-    public class Receiver {
-
-
-        private CountDownLatch latch;
-
-        public Receiver(CountDownLatch latch) {
-            this.latch = latch;
-        }
-
-        public void receiveMessage(String message) {
-            latch.countDown();
-        }
-    }
-
 
 }

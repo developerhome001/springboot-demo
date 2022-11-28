@@ -3,6 +3,8 @@ package com.keray.common;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.keray.common.entity.IBEntity;
+import com.keray.common.mysql.KerayLambdaQueryWrapper;
+import com.keray.common.mysql.KerayLambdaUpdateWrapper;
 
 /**
  * @author by keray

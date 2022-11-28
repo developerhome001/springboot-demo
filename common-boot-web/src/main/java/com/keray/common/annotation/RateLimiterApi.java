@@ -1,6 +1,6 @@
 package com.keray.common.annotation;
 
-import com.keray.common.RateLimiterApiTarget;
+import com.keray.common.gateway.limit.RateLimiterApiTarget;
 import com.keray.common.qps.RejectStrategy;
 
 import java.lang.annotation.*;

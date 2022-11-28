@@ -2,7 +2,7 @@ package com.keray.common.entity;
 
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.keray.common.Wrappers;
-import com.keray.common.annotation.BaseDbInsert;
+import com.keray.common.mysql.BaseDbInsert;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.transaction.annotation.Transactional;
 

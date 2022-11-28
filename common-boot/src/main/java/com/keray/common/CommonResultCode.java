@@ -17,8 +17,6 @@ public enum CommonResultCode implements ResultCode {
     limitedAccess(10003, "您的访问过于频繁，请稍后再试"),
     argumentNotPresent(10004, "数据输入错误，请重新输入"),
     dataNotAllowDelete(10005, "删除失败，请检查数据"),
-    loadDataFail(10007, "数据提交失败，请重新输入"),
-    needAiAuth(10008, "请认证"),
     ;
 
 

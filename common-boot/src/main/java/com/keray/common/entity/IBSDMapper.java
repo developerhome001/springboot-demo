@@ -2,8 +2,8 @@ package com.keray.common.entity;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
-import com.keray.common.annotation.BaseDbUpdateModel;
-import com.keray.common.annotation.BaseDbUpdateWrapper;
+import com.keray.common.mysql.BaseDbUpdateModel;
+import com.keray.common.mysql.BaseDbUpdateWrapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.io.Serializable;

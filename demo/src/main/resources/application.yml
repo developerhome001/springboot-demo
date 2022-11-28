@@ -1,0 +1,64 @@
+server:
+  port: 8080
+  shutdown: graceful
+  servlet:
+    session:
+      timeout: 8h
+    context-path:
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+spring:
+  profiles:
+    active: conf
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      #格式化输出
+      indent_output: true
+      #忽略无法转换的对象
+      fail_on_empty_beans: true
+    parser:
+      #允许出现特殊字符和转义符
+      allow_unquoted_control_chars: true
+      #允许出现单引号
+      allow_single_quotes: true
+  mvc:
+    format:
+      date-time: yyyy-MM-dd HH:mm:ss
+      date: yyyy-MM-dd
+      time: HH:mm:ss
+  data:
+    mongodb:
+      auto-index-creation: true
+  redis:
+    database: 0
+    cache-db: 1
+    redisson-db: 2
+    important-db: 3
+mybatis-plus:
+  mapper-locations: classpath:/mapper/*Mapper.xml
+  type-enums-package: com.keray.common.service.ienum
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    jdbc-type-for-null: 'null'
+
+keray:
+  api:
+    json:
+      open: true
+      global-switch: true
+    log:
+      all: true
+    time: true
+logging:
+  config: classpath:logback-${spring.profiles.active}.xml
+  level:
+    root: info
+  file:
+    path: ./log/demo

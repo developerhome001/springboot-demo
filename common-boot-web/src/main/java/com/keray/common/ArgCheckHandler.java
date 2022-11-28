@@ -1,6 +1,6 @@
 package com.keray.common;
 
-import com.keray.common.handler.ApiJsonParamResolver;
+import com.keray.common.resolver.ApiJsonParamResolver;
 import org.springframework.core.MethodParameter;
 
 /**

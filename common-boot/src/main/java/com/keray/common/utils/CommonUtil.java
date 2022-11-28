@@ -15,6 +15,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.*;
@@ -178,7 +180,7 @@ public final class CommonUtil {
      *
      * @return
      */
-    public static String hostIp() {
+    public static String hostIp(boolean v4) {
         try {
             Enumeration<NetworkInterface> allNetInterfaces = NetworkInterface.getNetworkInterfaces();
             InetAddress ip;
@@ -187,10 +189,20 @@ public final class CommonUtil {
                 Enumeration<InetAddress> addresses = netInterface.getInetAddresses();
                 while (addresses.hasMoreElements()) {
                     ip = addresses.nextElement();
+                    if (ip instanceof Inet4Address && !v4) continue;
+                    if (ip instanceof Inet6Address && v4) continue;
                     String retIp = ip.getHostAddress();
-                    if (retIp.matches("192\\.168.*")) {
+                    if (retIp.startsWith("192.168")) {
                         return retIp;
                     }
+                    if (retIp.startsWith("172.")) {
+                        return retIp;
+                    }
+                    if (retIp.startsWith("10.")) {
+                        return retIp;
+                    }
+                    if ("127.0.0.1".equals(retIp) || "::1".equals(retIp)) continue;
+                    return retIp;
                 }
             }
             return "";

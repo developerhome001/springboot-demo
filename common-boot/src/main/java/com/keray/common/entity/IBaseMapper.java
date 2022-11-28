@@ -1,22 +1,15 @@
 package com.keray.common.entity;
 
-import cn.hutool.aop.ProxyUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.override.MybatisMapperProxy;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
-import com.keray.common.LogicalDataMapper;
-import com.keray.common.SpringContextHolder;
+import com.keray.common.mysql.LogicalDataMapper;
 import com.keray.common.Wrappers;
-import com.keray.common.annotation.BaseDbUpdateWrapper;
+import com.keray.common.mysql.BaseDbUpdateWrapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.aop.SpringProxy;
-import org.springframework.aop.support.AopUtils;
 
 import java.io.Serializable;
-import java.lang.reflect.Proxy;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;

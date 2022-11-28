@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.keray.common.CommonResultCode;
-import com.keray.common.KerayLambdaQueryWrapper;
+import com.keray.common.mysql.KerayLambdaQueryWrapper;
 import com.keray.common.SpringContextHolder;
 import com.keray.common.Wrappers;
 import com.keray.common.exception.BizRuntimeException;

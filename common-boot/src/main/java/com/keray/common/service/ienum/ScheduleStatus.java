@@ -1,6 +1,6 @@
 package com.keray.common.service.ienum;
 
-import com.keray.common.MybatisPlusEnum;
+import com.keray.common.mysql.MybatisPlusEnum;
 import lombok.Getter;
 
 /**

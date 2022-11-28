@@ -1,7 +1,7 @@
 package com.keray.common;
 
 import cn.hutool.core.map.MapUtil;
-import com.keray.common.config.MybatisPlusContext;
+import com.keray.common.mysql.config.MybatisPlusContext;
 import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
 

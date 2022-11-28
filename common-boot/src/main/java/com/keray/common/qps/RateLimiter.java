@@ -2,7 +2,7 @@ package com.keray.common.qps;
 
 import cn.hutool.core.util.StrUtil;
 import com.keray.common.exception.QPSFailException;
-import com.keray.common.support.DistributedLock;
+import com.keray.common.lock.DistributedLock;
 import lombok.extern.slf4j.Slf4j;
 
 /**

@@ -1,15 +1,16 @@
 package com.keray.common.context;
 
-import cn.hutool.core.util.StrUtil;
-import com.keray.common.KerayHandlerMethodArgumentResolver;
-import com.keray.common.handler.KerayHandlerMethodArgumentResolverConfig;
-import com.keray.common.util.HttpWebUtil;
+import com.keray.common.IUserContext;
+import com.keray.common.resolver.KerayHandlerMethodArgumentResolver;
+import com.keray.common.resolver.KerayHandlerMethodArgumentResolverConfig;
+import com.keray.common.util.HttpContextUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
@@ -18,6 +19,9 @@ import java.util.Map;
  */
 @Configuration
 public class WebContextResolver implements KerayHandlerMethodArgumentResolver {
+
+    @Resource
+    private IUserContext<?> userContext;
 
     public WebContextResolver(KerayHandlerMethodArgumentResolverConfig kerayHandlerMethodArgumentResolverConfig) {
         kerayHandlerMethodArgumentResolverConfig.addKerayResolver(this);
@@ -33,10 +37,10 @@ public class WebContextResolver implements KerayHandlerMethodArgumentResolver {
         HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
         if (request == null) return new WebContext();
         return WebContext.builder()
-                .deviceType(HttpWebUtil.currentDeviceType(request))
-                .uuid(HttpWebUtil.duuid(request))
-                .host(HttpWebUtil.host(request))
-                .ip(getIp(request))
+                .deviceType(HttpContextUtil.currentDeviceType(request))
+                .uuid(userContext.getDuid())
+                .host(HttpContextUtil.host(request))
+                .ip(userContext.currentIp())
                 .build();
     }
 
@@ -46,13 +50,4 @@ public class WebContextResolver implements KerayHandlerMethodArgumentResolver {
         return 5;
     }
 
-    public String getIp(HttpServletRequest request) {
-        String ip = request.getRemoteAddr();
-        String forwardedIp = request.getHeader("x-forwarded-for");
-        if (StrUtil.isNotBlank(forwardedIp)) {
-            String[] ips = forwardedIp.split(",");
-            return ips[0];
-        }
-        return ip;
-    }
 }

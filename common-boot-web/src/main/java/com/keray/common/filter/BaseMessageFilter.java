@@ -2,6 +2,7 @@ package com.keray.common.filter;
 
 import cn.hutool.core.util.StrUtil;
 import com.keray.common.IUserContext;
+import com.keray.common.util.HttpContextUtil;
 import com.keray.common.util.HttpWebUtil;
 import com.keray.common.utils.UUIDUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -28,27 +29,16 @@ public class BaseMessageFilter implements Filter {
     // 设备uuid
     public static final String TOKEN_DEVICE_UUID_KEY = "duid";
 
-    public static final String SERVER_SIGN_VALUE = "43f2326618b32a95";
-    public static final String SERVER_SIGN = "Server-Sign";
-
     @Resource
     private IUserContext<?> userContext;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         if (request instanceof HttpServletRequest httpServletRequest) {
-            String ip = httpServletRequest.getRemoteAddr();
-            var forwardedIp = httpServletRequest.getHeader("x-forwarded-for");
-            if (StrUtil.isNotBlank(forwardedIp)) {
-                var sign = httpServletRequest.getHeader(SERVER_SIGN);
-                if (SERVER_SIGN_VALUE.equals(sign)) {
-                    ip = forwardedIp;
-                }
-            }
             // 设置request上下文
             userContext.setCurrentRequest(httpServletRequest);
             // 设置当前id
-            userContext.setIp(ip);
+            userContext.setIp(HttpContextUtil.getIp(httpServletRequest));
             var duid = getRequestUUID(httpServletRequest);
             if (StrUtil.isEmpty(duid)) {
                 duid = generateBrowserUUID((HttpServletResponse) response);
