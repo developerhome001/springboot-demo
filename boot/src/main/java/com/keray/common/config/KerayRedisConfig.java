@@ -9,19 +9,19 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.connection.RedisClusterConfiguration;
+import org.springframework.data.redis.connection.RedisConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.PatternTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -29,18 +29,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * redis配置
  *
  * @author keray
  */
-@Configuration
-@ConditionalOnProperty("spring.redis.host")
+@Configuration("kerayRedisConfig")
+@ConditionalOnClass(RedisConnectionFactory.class)
 @ConfigurationProperties("spring.redis")
 @Slf4j
-public class RedisConfig {
+public class KerayRedisConfig {
 
     @Getter
     private final ObjectMapper om;
@@ -59,22 +58,32 @@ public class RedisConfig {
 
     private final Jackson2JsonRedisSerializer jacksonSeial = new Jackson2JsonRedisSerializer(Object.class);
 
-    public RedisConfig() {
+    public KerayRedisConfig() {
         this.om = redisObjectMapper();
     }
 
+    /**
+     * @param redisConnectionFactory
+     * @param redisProperties
+     * @return
+     */
     @Bean
     @Primary
+    @ConditionalOnMissingBean(name = "redisTemplate")
     public RedisTemplate redisTemplate(RedisConnectionFactory redisConnectionFactory, RedisProperties redisProperties) {
         log.info("注入redis基础库：{}", redisProperties.getDatabase());
-        return redisTemplateFactory(redisConnectionFactory);
+        return redisTemplateFactory(redisConnectionFactory, redisProperties.getDatabase());
     }
 
 
+    /**
+     * @param redisConnectionFactory
+     * @return
+     */
     @Bean(name = "cacheRedisRedisTemplate")
-    public RedisTemplate cacheRedisRedisTemplate(RedisProperties redisProperties) {
+    public RedisTemplate cacheRedisRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
         log.info("注入redis缓存库：{}", cacheDb);
-        return redisTemplateFactory(redisProperties, cacheDb);
+        return redisTemplateFactory(redisConnectionFactory, cacheDb);
     }
 
 
@@ -85,47 +94,21 @@ public class RedisConfig {
      * 重要的Redis数据  不允许清除
      * </p>
      *
-     * @param redisProperties
+     * @param redisConnectionFactory
      * @return <p> {@link RedisTemplate} </p>
-     * @throws
      */
     @Bean(name = "persistenceRedisTemplate")
-    public RedisTemplate persistenceRedisTemplate(RedisProperties redisProperties) {
+    public RedisTemplate persistenceRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
         log.info("注入redis持久库：{}", importantDb);
-        return redisTemplateFactory(redisProperties, importantDb);
-    }
-
-    @Bean
-    @Primary
-    public RedisConnectionFactory redisConnectionFactory(RedisProperties redisProperties) {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName(redisProperties.getHost());
-        config.setPassword(redisProperties.getPassword());
-        config.setPort(redisProperties.getPort());
-        config.setDatabase(redisProperties.getDatabase());
-        LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
-        factory.setValidateConnection(true);
-        return factory;
+        return redisTemplateFactory(redisConnectionFactory, importantDb);
     }
 
 
-    public RedisTemplate redisTemplateFactory(RedisProperties redisProperties, Integer database) {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName(redisProperties.getHost());
-        config.setPassword(redisProperties.getPassword());
-        config.setPort(redisProperties.getPort());
-        //默认0号库，现在这里是1号库
-        config.setDatabase(database);
-        //手动创建工厂，这样做的目的就是划分库
-        LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
-        factory.setValidateConnection(true);
-        factory.afterPropertiesSet();
-        return redisTemplateFactory(factory);
-    }
-
-
-    public RedisTemplate redisTemplateFactory(RedisConnectionFactory factory) {
+    public RedisTemplate redisTemplateFactory(RedisConnectionFactory factory, Integer database) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
+        if (factory instanceof LettuceConnectionFactory lf) {
+            lf.setDatabase(database);
+        }
         // 配置连接工厂
         template.setConnectionFactory(factory);
         jacksonSeial.setObjectMapper(om);

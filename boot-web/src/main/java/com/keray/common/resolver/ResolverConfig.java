@@ -46,7 +46,12 @@ public class ResolverConfig {
         var springResolvers = adapter.getArgumentResolvers();
         var resolverComposite = new HandlerMethodArgumentResolverComposite();
         resolverComposite.addResolver(new PageableHandlerMethodArgumentResolver());
-        resolverComposite.addResolver(new MybatisPlusPageHandlerMethodReturnValueHandler(adapter.getMessageConverters()));
+        try {
+            Class.forName("com.baomidou.mybatisplus.extension.plugins.pagination.Page");
+            resolverComposite.addResolver(new MybatisPlusPageHandlerMethodReturnValueHandler(adapter.getMessageConverters()));
+        }catch (ClassNotFoundException e) {
+            log.warn("mybatis plus不存在");
+        }
         resolverComposite.addResolvers(springResolvers);
         var root = new KerayHandlerMethodArgumentResolverConfig(adapter, resolverComposite);
         adapter.setArgumentResolvers(new LinkedList<>() {{

@@ -37,6 +37,7 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -64,6 +65,7 @@ import java.util.function.Consumer;
 @Aspect
 @Slf4j
 @ConditionalOnClass(MybatisPlusProperties.class)
+@MapperScan("com.keray.common.service.mapper")
 public class MybatisPlusSqlInjector implements BeanPostProcessor {
 
     private final IContext userContext;

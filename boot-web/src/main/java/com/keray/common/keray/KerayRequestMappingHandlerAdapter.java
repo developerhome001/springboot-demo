@@ -8,16 +8,17 @@ import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHan
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 public class KerayRequestMappingHandlerAdapter extends RequestMappingHandlerAdapter {
 
     private final ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory;
 
-    private final ArrayList<ServletInvocableHandlerMethodHandler> handlers;
+    private final List<ServletInvocableHandlerMethodHandler> handlers;
 
     private volatile ServletInvocableHandlerMethodHandler[] cache = null;
 
-    public KerayRequestMappingHandlerAdapter(ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory, ArrayList<ServletInvocableHandlerMethodHandler> handlers) {
+    public KerayRequestMappingHandlerAdapter(ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory, List<ServletInvocableHandlerMethodHandler> handlers) {
         this.servletInvocableHandlerMethodFactory = servletInvocableHandlerMethodFactory;
         this.handlers = handlers;
     }
@@ -35,7 +36,6 @@ public class KerayRequestMappingHandlerAdapter extends RequestMappingHandlerAdap
         }
         return servletInvocableHandlerMethodFactory.create(handlerMethod, cache);
     }
-
 
 
 }

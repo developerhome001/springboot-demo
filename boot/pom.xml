@@ -15,28 +15,16 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.mybatis-plus>3.5.0</project.mybatis-plus>
-        <project.redisson>3.16.7</project.redisson>
     </properties>
 
     <dependencies>
 
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus</artifactId>
-            <version>${project.mybatis-plus}</version>
-        </dependency>
 
         <dependency>
             <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.redisson</groupId>
-            <artifactId>redisson</artifactId>
-            <version>${project.redisson}</version>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -58,31 +46,40 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
+
         <dependency>
             <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-redis</artifactId>
+            <artifactId>spring-data-commons</artifactId>
         </dependency>
 
-        <!--        k8s -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-extension</artifactId>
+            <version>${project.mybatis-plus}</version>
+        </dependency>
+
         <dependency>
             <groupId>io.kubernetes</groupId>
             <artifactId>client-java</artifactId>
+            <scope>provided</scope>
         </dependency>
 
-        <!--        可以排除的start依赖      -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
             <version>${project.redisson}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>${project.mybatis-plus}</version>
+            <scope>provided</scope>
         </dependency>
 
 

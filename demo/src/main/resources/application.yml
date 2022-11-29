@@ -58,7 +58,7 @@ keray:
       global-switch: true
     log:
       all: true
-    time: true
+    time: false
 logging:
   config: classpath:logback-${spring.profiles.active}.xml
   level:

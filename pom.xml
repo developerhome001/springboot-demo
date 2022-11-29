@@ -21,6 +21,8 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <boot-version>2.6.3</boot-version>
+        <project.mybatis-plus>3.5.0</project.mybatis-plus>
+        <project.redisson>3.16.7</project.redisson>
     </properties>
 
     <dependencyManagement>

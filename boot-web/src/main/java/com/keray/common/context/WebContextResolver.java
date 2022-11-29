@@ -1,6 +1,5 @@
 package com.keray.common.context;
 
-import com.keray.common.IUserContext;
 import com.keray.common.resolver.KerayHandlerMethodArgumentResolver;
 import com.keray.common.resolver.KerayHandlerMethodArgumentResolverConfig;
 import com.keray.common.util.HttpContextUtil;
@@ -10,7 +9,6 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
@@ -19,9 +17,6 @@ import java.util.Map;
  */
 @Configuration
 public class WebContextResolver implements KerayHandlerMethodArgumentResolver {
-
-    @Resource
-    private IUserContext<?> userContext;
 
     public WebContextResolver(KerayHandlerMethodArgumentResolverConfig kerayHandlerMethodArgumentResolverConfig) {
         kerayHandlerMethodArgumentResolverConfig.addKerayResolver(this);
@@ -38,9 +33,9 @@ public class WebContextResolver implements KerayHandlerMethodArgumentResolver {
         if (request == null) return new WebContext();
         return WebContext.builder()
                 .deviceType(HttpContextUtil.currentDeviceType(request))
-                .uuid(userContext.getDuid())
+                .uuid(HttpContextUtil.duuid(request))
                 .host(HttpContextUtil.host(request))
-                .ip(userContext.currentIp())
+                .ip(HttpContextUtil.getIp(request))
                 .build();
     }
 

@@ -3,6 +3,7 @@ package com.keray.common.argcheck;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
 
@@ -11,6 +12,7 @@ import org.springframework.core.MethodParameter;
  * date:2021/7/9 10:48 上午
  */
 @Configuration
+@ConditionalOnClass(Page.class)
 public class PageArgCheckHandler implements ArgCheckHandler<Page<?>> {
 
     @Override

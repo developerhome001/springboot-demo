@@ -5,13 +5,12 @@ keray:
     open: true # 定时任务配置
     namespace: dev #空间名
   api:
-    rate-limit: true #开启接口令牌桶限流 默认开启 需要注入redis
     json: 
       open: true # json解析
       global-switch: # 全局开启json解析
     log: 
       all: true #api日志
-    time: true # 开启接口时间记录
+    time: true # 开启接口时间记录 必须引入mongodb
 ```
 
 ## cache使用
@@ -37,38 +36,36 @@ spring:
 
 ```
 
-```java
-// 使用
-// 在入口类加上
-@ComponentScan(value = "com.keray.common")
-class Main {}
-```
-### 不需要mybatis-plus时
+
+### 需要mybatis-plus时
 ```xml
-<exclusion>
+<dependency>
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-spring</artifactId>
-</exclusion>
-<exclusion>
+</dependency>
+<dependency>
     <groupId>com.baomidou</groupId>
     <artifactId>mybatis-plus-boot-starter</artifactId>
-</exclusion>
+</dependency>
 ```
-### 不需要redis时
+### 需要redis时
 ```xml
-<exclusion>
+<dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-redis</artifactId>
-</exclusion>
-<exclusion>
+</dependency>
+```
+### 需要redisson时
+```xml
+<dependency>
     <groupId>org.redisson</groupId>
     <artifactId>redisson-spring-boot-starter</artifactId>
-</exclusion>
+</dependency>
 ```
 ### 不需要mongo时
 ```xml
-<exclusion>
+<dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-mongodb</artifactId>
-</exclusion>
+</dependency>
 ```

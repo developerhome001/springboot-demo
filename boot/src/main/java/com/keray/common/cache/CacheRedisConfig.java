@@ -2,6 +2,7 @@ package com.keray.common.cache;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.cache.CacheProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.ehcache.EhCacheManagerUtils;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +22,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
  */
 @Configuration
 @ConditionalOnProperty(value = "spring.cache.type", havingValue = "redis")
+@ConditionalOnClass(RedisTemplate.class)
 @Import(CacheProperties.class)
 public class CacheRedisConfig {
 
