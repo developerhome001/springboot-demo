@@ -32,7 +32,7 @@ public class AliyunPluginsAuto {
     @Primary
     @Bean
     @ConditionalOnBean(CommonOssConfig.class)
-    public OssPlugins middleOssPlugins(AliyunConfig aliyunConfig, CommonOssConfig ossConfig, @Qualifier("redisTemplate") RedisTemplate<String, String> redisTemplate) {
+    public OssPlugins middleOssPlugins(AliyunConfig aliyunConfig, CommonOssConfig ossConfig, @Qualifier("redisTemplate") RedisTemplate redisTemplate) {
         CommonOssConfig config = ossConfig.copy();
         config.setBasePath("middle/" + ossConfig.getBasePath());
         config.setAcl(CannedAccessControlList.Private);
@@ -49,7 +49,7 @@ public class AliyunPluginsAuto {
 
     @Bean
     @ConditionalOnBean(CommonOssConfig.class)
-    public OssPlugins cdnOssPlugins(AliyunConfig aliyunConfig, CommonOssConfig ossConfig, @Qualifier("redisTemplate") RedisTemplate<String, String> redisTemplate) {
+    public OssPlugins cdnOssPlugins(AliyunConfig aliyunConfig, CommonOssConfig ossConfig, @Qualifier("redisTemplate") RedisTemplate redisTemplate) {
         CommonOssConfig config = ossConfig.copy();
         config.setBucket(ossConfig.getCdnBucket());
         config.setBasePath("cdn/" + ossConfig.getBasePath());
@@ -70,7 +70,7 @@ public class AliyunPluginsAuto {
 
     @Bean
     @ConditionalOnBean(CommonOssConfig.class)
-    public OssPlugins diskOssPlugins(AliyunConfig aliyunConfig, CommonOssConfig ossConfig, @Qualifier("redisTemplate") RedisTemplate<String, String> redisTemplate) {
+    public OssPlugins diskOssPlugins(AliyunConfig aliyunConfig, CommonOssConfig ossConfig, @Qualifier("redisTemplate") RedisTemplate redisTemplate) {
         CommonOssConfig config = ossConfig.copy();
         config.setBucket(ossConfig.getDiskBucket());
         config.setBasePath("disk/" + ossConfig.getBasePath());
@@ -81,7 +81,7 @@ public class AliyunPluginsAuto {
     @Bean
     @ConditionalOnBean(AliyunVideoConfig.class)
     @ConditionalOnMissingBean(AliyunVideoPlugins.class)
-    public VideoPlugins aliVideoPlugins(AliyunConfig aliyunConfig, AliyunVideoConfig videoConfig, @Qualifier("redisTemplate") RedisTemplate<String, String> redisTemplate) {
+    public VideoPlugins aliVideoPlugins(AliyunConfig aliyunConfig, AliyunVideoConfig videoConfig, @Qualifier("redisTemplate") RedisTemplate redisTemplate) {
         return new AliyunVideoPlugins(aliyunConfig, videoConfig, redisTemplate);
     }
 

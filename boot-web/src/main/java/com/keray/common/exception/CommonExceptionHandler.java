@@ -5,6 +5,7 @@ import com.keray.common.CommonResultCode;
 import com.keray.common.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
+import org.springframework.core.annotation.Order;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @ControllerAdvice
+@Order(0)
 @Slf4j
 public class CommonExceptionHandler {
 
@@ -30,7 +32,7 @@ public class CommonExceptionHandler {
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class, ConstraintViolationException.class})
     @ResponseBody
     public Object resolveExceptionMVC(HttpServletRequest request, HttpServletResponse response, Object handler, Exception exception) {
-        log.error(request.getRequestURI() + "resolveExceptionMVC..........", exception);
+        log.error(request.getRequestURI() + "\nresolveExceptionMVC..........", exception);
         Result result = null;
         if (exception instanceof MethodArgumentNotValidException methodArgumentNotValidException) {
             BindingResult bindingResult = methodArgumentNotValidException.getBindingResult();
@@ -72,14 +74,14 @@ public class CommonExceptionHandler {
     @ExceptionHandler({MissingServletRequestParameterException.class})
     @ResponseBody
     public Object resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, MissingServletRequestParameterException exception) {
-        log.warn(request.getRequestURI() + "MissingServletRequestParameterException..........", exception);
+        log.warn(request.getRequestURI() + "\nMissingServletRequestParameterException..........", exception);
         return Result.fail(CommonResultCode.argumentNotPresent.getCode(), exception.getParameterName());
     }
 
     @ExceptionHandler({IllegalArgumentException.class, HttpRequestMethodNotSupportedException.class})
     @ResponseBody
     public Object resolveExceptionParam(HttpServletRequest request, HttpServletResponse response, Object handler, Exception exception) {
-        log.error(request.getRequestURI() + "resolveExceptionParam..........", exception);
+        log.error(request.getRequestURI() + "\nresolveExceptionParam..........", exception);
 
         if (exception instanceof IllegalArgumentException) {
             return Result.fail(CommonResultCode.illegalArgument.getCode(), exception.getMessage(), exception);
@@ -93,7 +95,7 @@ public class CommonExceptionHandler {
     @ExceptionHandler({BizRuntimeException.class})
     @ResponseBody
     public Object resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, BizRuntimeException exception) {
-        log.error(request.getRequestURI() + "BizRuntimeException..........", exception);
+        log.error(request.getRequestURI() + "\nBizRuntimeException..........", exception);
         CodeException codeException = codeException(exception);
         return Result.fail(codeException.getCode(), codeException.getMessage(), (Exception) codeException);
     }
@@ -102,7 +104,7 @@ public class CommonExceptionHandler {
     @ExceptionHandler({BizException.class})
     @ResponseBody
     public Object resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, BizException exception) {
-        log.error(request.getRequestURI() + "BizException..........", exception);
+        log.error(request.getRequestURI() + "\nBizException..........", exception);
         CodeException codeException = codeException(exception);
         return Result.fail(codeException.getCode(), codeException.getMessage(), (Exception) codeException);
     }
@@ -111,14 +113,14 @@ public class CommonExceptionHandler {
             ClientAbortException.class})
     @ResponseBody
     public Object resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, ClientAbortException exception) {
-        log.error(request.getRequestURI() + "ClientAbortException");
+        log.error(request.getRequestURI() + "\nClientAbortException");
         return Result.fail(CommonResultCode.unknown, exception);
     }
 
     @ExceptionHandler({Exception.class})
     @ResponseBody
     public Object resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception exception) {
-        log.error(request.getRequestURI() + "Exception..........", exception);
+        log.error(request.getRequestURI() + "\nException..........", exception);
         if (exception instanceof CodeException codeException) {
             return Result.fail(codeException.getCode(), codeException.getMessage(), (Exception) codeException);
         }

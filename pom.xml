@@ -70,23 +70,26 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.80</version>
+            <version>2.0.20</version>
         </dependency>
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.7.22</version>
+            <version>5.8.10</version>
         </dependency>
-
     </dependencies>
+<!--    <distributionManagement>-->
+<!--        <repository>-->
+<!--            <id>keray-releases</id>-->
+<!--            <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>-->
+<!--        </repository>-->
+<!--    </distributionManagement>-->
+
+
     <distributionManagement>
-        <snapshotRepository>
-            <id>keray-snapshots</id>
-            <url>https://packages.aliyun.com/maven/repository/2010881-snapshot-JFQB6y/</url>
-        </snapshotRepository>
         <repository>
-            <id>keray-releases</id>
-            <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>
+            <id>cqvip-snapshots</id>
+            <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>
         </repository>
     </distributionManagement>
 

@@ -1,6 +1,7 @@
 package com.keray.common.qps;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.keray.common.exception.QPSFailException;
 import com.keray.common.lock.DistributedLock;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +54,8 @@ public class RateLimiter {
     }
 
     private static <L> void privateAcquire(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, int acquireCount, int millisecond, int recoveryCount, RejectStrategy rejectStrategy, int waitTime) throws InterruptedException, QPSFailException {
-        if (maxRate < 1 || recoveryCount < 1 || millisecond < 1) throw new RuntimeException("最大令牌数 间隔时间 下次产生令牌上不允许小于1");
+        if (maxRate < 1 || recoveryCount < 1 || millisecond < 1)
+            throw new RuntimeException("最大令牌数 间隔时间 下次产生令牌上不允许小于1");
         L lock = null;
         var locaRelease = false;
         try {
@@ -107,6 +109,14 @@ public class RateLimiter {
      */
     private static <L> void reject(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, int acquireCount, int millisecond, int recoveryCount, RejectStrategy rejectStrategy, int waitTime) throws InterruptedException, QPSFailException {
         log.warn("RateLimiter warn:{}", key);
+        if (key.equals("system:14.111.48.40")) {
+            log.warn("调试qps存储数据:{} {} {} {}", store.getStoreData(key), maxRate, millisecond, acquireCount);
+            log.warn("调试qps存储数据:{}", JSONUtil.toJsonStr(((MemoryRateLimiterStore) store).getStore()));
+        } else {
+            log.warn("qps失败     调试qps存储数据:{}", store.getStoreData(key));
+            // todo 先放行  有bug
+            return;
+        }
         if (rejectStrategy == RejectStrategy.noting) return;
         if (rejectStrategy == RejectStrategy.throw_exception) throw new QPSFailException();
         if (rejectStrategy == RejectStrategy.wait) {

@@ -216,7 +216,10 @@ public class OssPlugins extends AliyunPlugins implements FileUploadPlugins, File
                 return new r(finalI, result);
             });
         }
-        ArrayList<A> result = new ArrayList<>(data.length);
+        ArrayList<A> result = new ArrayList<>(data.length * 2);
+        for (var i = 0; i < data.length; i++) {
+            result.add(null);
+        }
         Future<r> future;
         for (int i = 0; ; i++) {
             if (i >= data.length) {

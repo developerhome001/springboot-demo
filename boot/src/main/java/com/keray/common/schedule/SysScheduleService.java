@@ -50,6 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -194,14 +195,14 @@ public class SysScheduleService implements BSService<SysScheduleModel, Long> {
                 JSONObject kzCron = JSON.parseObject(model.getKzCron());
                 JSONObject methodDetail = JSON.parseObject(model.getMethodDetail());
                 String methodName = methodDetail.getString("name");
-                Class[] sign = methodDetail.getJSONArray("sign") == null ? null :
-                        methodDetail.getJSONArray("sign").stream().map(className -> {
-                            try {
-                                return Class.forName(String.valueOf(className));
-                            } catch (ClassNotFoundException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }).toArray(Class[]::new);
+                Class[] sign = null;
+                var signArr = methodDetail.getJSONArray("sign");
+                if (signArr != null) {
+                    sign = new Class[signArr.size()];
+                    for (var i = 0; i < sign.length; i++) {
+                        sign[i] = Class.forName(signArr.getString(i));
+                    }
+                }
                 JSONArray args = methodDetail.getJSONArray("args");
                 Object[] argsValue = null;
                 if (CollUtil.isNotEmpty(args)) {

@@ -80,19 +80,6 @@ public class SpringMvcConfig implements WebMvcConfigurer {
         builder.deserializerByType(LocalDateTime.class, new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT)));
         builder.deserializerByType(LocalDate.class, new LocalDateDeserializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT)));
         builder.deserializerByType(LocalTime.class, new LocalTimeDeserializer(DateTimeFormatter.ofPattern(DEFAULT_TIME_FORMAT)));
-        builder.deserializerByType(Date.class, new JsonDeserializer<Date>() {
-            @Override
-            public Date deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
-                SimpleDateFormat format = new SimpleDateFormat(DEFAULT_DATE_TIME_FORMAT);
-                String date = jsonParser.getText();
-                try {
-                    return format.parse(date);
-                } catch (ParseException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
         return builder.build();
     }
 

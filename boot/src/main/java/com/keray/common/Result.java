@@ -2,10 +2,7 @@ package com.keray.common;
 
 import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
@@ -14,12 +11,20 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SuppressWarnings("serial")
-@Data
+@Getter
+@Setter
 @Slf4j
 public class Result<T> implements Serializable {
 
+    private String message;
+
     protected Integer code;
+
     protected T data;
+
+    public Boolean getSuccess() {
+        return code == CommonResultCode.ok.getCode();
+    }
 
     @ToString(callSuper = true)
     @EqualsAndHashCode(callSuper = true)
@@ -35,7 +40,6 @@ public class Result<T> implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @Data
     public static class FailResult<E extends Throwable, T> extends Result<T> {
-        private String message;
         @JsonIgnore
         private E error;
     }
