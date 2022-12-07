@@ -50,8 +50,8 @@ public class ERedisCacheWriter implements RedisCacheWriter {
         Assert.notNull(value, "Value must not be null!");
 
         execute(name, connection -> {
-            if (shouldExpireWithin(name)) {
-                connection.set(key, value, Expiration.from(getTtl(name), TimeUnit.MILLISECONDS), RedisStringCommands.SetOption.upsert());
+            if (shouldExpireWithin(name, ttl)) {
+                connection.set(key, value, Expiration.from(getTtl(name, ttl), TimeUnit.MILLISECONDS), RedisStringCommands.SetOption.upsert());
             } else {
                 connection.set(key, value);
             }
@@ -91,8 +91,8 @@ public class ERedisCacheWriter implements RedisCacheWriter {
 
             try {
                 Boolean r = connection.setNX(key, value);
-                if (r != null && r && shouldExpireWithin(name)) {
-                    connection.pExpire(key, getTtl(name));
+                if (r != null && r && shouldExpireWithin(name, ttl)) {
+                    connection.pExpire(key, getTtl(name, ttl));
                     return null;
                 }
 
@@ -247,15 +247,16 @@ public class ERedisCacheWriter implements RedisCacheWriter {
         }
     }
 
-    private boolean shouldExpireWithin(String name) {
-        return config != null && config.containsKey(name) && config.get(name).getTimeToLiveSeconds() > 0;
+    private boolean shouldExpireWithin(String name, Duration ttl) {
+        return ttl != null || config != null && config.containsKey(name) && config.get(name).getTimeToLiveSeconds() > 0;
     }
 
     private static byte[] createCacheLockKey(String name) {
         return (name + "~lock").getBytes(StandardCharsets.UTF_8);
     }
 
-    private long getTtl(String name) {
+    private long getTtl(String name, Duration ttl) {
+        if (config.get(name) == null) return ttl.toMillis();
         return config.get(name).getTimeToLiveSeconds() * 1000;
     }
 

@@ -7,19 +7,15 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.keray.common.Wrappers;
-import com.keray.common.cache.CacheConstants;
 import com.keray.common.entity.BSService;
-import com.keray.common.entity.IBEntity;
 import com.keray.common.entity.IBSEntity;
 import com.keray.common.exception.BizRuntimeException;
 import com.keray.common.service.model.base.BaseTreeModel;
-import com.keray.common.service.model.base.BaseTreeModelV2;
 import org.springframework.cache.annotation.Cacheable;
 
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * @author by keray
@@ -33,7 +29,6 @@ public interface ITreeModelService<T extends BaseTreeModel<T, ID>, ID extends Se
      *
      * @return
      */
-    @Cacheable(value = CacheConstants.TREE_DATA_CACHE, key = "'tree:' + #parent.id + -1", unless = "#result == null")
     default T setChildren(T owner) {
         return setChildren(owner, -1, null);
     }
@@ -49,7 +44,6 @@ public interface ITreeModelService<T extends BaseTreeModel<T, ID>, ID extends Se
      * @param n 获取多少级 -1 不限
      * @return <p>  </p>
      */
-    @Cacheable(value = CacheConstants.TREE_DATA_CACHE, key = "'tree:' + #owner.id + #n", unless = "#result == null")
     default T setChildren(T owner, int n) {
         return setChildren(owner, n, Wrappers.query());
     }

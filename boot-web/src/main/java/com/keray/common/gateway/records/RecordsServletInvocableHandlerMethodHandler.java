@@ -2,7 +2,7 @@ package com.keray.common.gateway.records;
 
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
 import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
-import com.keray.common.SysThreadPool;
+import com.keray.common.threadpool.SysThreadPool;
 import com.keray.common.util.HttpContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -38,14 +38,14 @@ public class RecordsServletInvocableHandlerMethodHandler implements ServletInvoc
     @Override
     public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback callback) throws Exception {
         HttpServletRequest req = request.getNativeRequest(HttpServletRequest.class);
-        int status = gatewayRecords.support(handlerMethod, req);
+        RecordsContext context = new RecordsContext();
+        int status = gatewayRecords.support(handlerMethod, req, context);
         if (status == 0 || req == null) return callback.get();
         long startTime = System.currentTimeMillis();
         Object result = callback.get();
         long endTime = System.currentTimeMillis();
         try {
             // 生成记录上下文
-            RecordsContext context = new RecordsContext();
             context.setArgs(args);
             context.setResult(result);
             context.setUri(req.getRequestURI());

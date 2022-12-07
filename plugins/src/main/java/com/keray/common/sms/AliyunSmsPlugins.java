@@ -8,7 +8,7 @@ import com.aliyun.teaopenapi.models.Config;
 import com.keray.common.AliyunConfig;
 import com.keray.common.AliyunPlugins;
 import com.keray.common.IPlugins;
-import com.keray.common.SysThreadPool;
+import com.keray.common.threadpool.SysThreadPool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;

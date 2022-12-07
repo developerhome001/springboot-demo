@@ -62,23 +62,27 @@ public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerM
         Map<Object, Object> threadLocal = new HashMap<>();
         try {
             Object[] args = getMethodArgumentValues(threadLocal, request, mavContainer, providedArgs);
-            if (handlers != null) {
-                final AtomicInteger index = new AtomicInteger(0);
-                AtomicReference<ServletInvocableHandlerMethodCallback> callback1 = new AtomicReference<>(null);
-                ServletInvocableHandlerMethodCallback callback = () -> {
-                    index.getAndIncrement();
-                    if (index.get() == handlers.length) {
-                        return doInvoke(args);
-                    }
-                    return handlers[index.get()].work(this, args, request, callback1.get());
-                };
-                callback1.set(callback);
-                return handlers[index.get()].work(this, args, request, callback);
-            } else {
-                return doInvoke(args);
-            }
+            return work(args, request, () -> doInvoke(args));
         } finally {
             threadLocal.clear();
+        }
+    }
+
+    protected Object work(Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback call) throws Exception {
+        if (handlers != null) {
+            final AtomicInteger index = new AtomicInteger(0);
+            AtomicReference<ServletInvocableHandlerMethodCallback> callback1 = new AtomicReference<>(null);
+            ServletInvocableHandlerMethodCallback callback = () -> {
+                index.getAndIncrement();
+                if (index.get() == handlers.length) {
+                    return call.get();
+                }
+                return handlers[index.get()].work(this, args, request, callback1.get());
+            };
+            callback1.set(callback);
+            return handlers[index.get()].work(this, args, request, callback);
+        } else {
+            return call.get();
         }
     }
 

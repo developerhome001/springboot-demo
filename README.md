@@ -40,10 +40,6 @@ spring:
 ### 需要mybatis-plus时
 ```xml
 <dependency>
-    <groupId>org.mybatis</groupId>
-    <artifactId>mybatis-spring</artifactId>
-</dependency>
-<dependency>
     <groupId>com.baomidou</groupId>
     <artifactId>mybatis-plus-boot-starter</artifactId>
 </dependency>
@@ -62,7 +58,7 @@ spring:
     <artifactId>redisson-spring-boot-starter</artifactId>
 </dependency>
 ```
-### 不需要mongo时
+### 需要mongo时
 ```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>

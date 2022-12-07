@@ -13,7 +13,7 @@ public interface GatewayRecords {
      * @param request
      * @return 0 不记录 1 同步记录 2异步记录
      */
-    int support(HandlerMethod method, HttpServletRequest request);
+    int support(HandlerMethod method, HttpServletRequest request, RecordsContext context);
 
 
     /**

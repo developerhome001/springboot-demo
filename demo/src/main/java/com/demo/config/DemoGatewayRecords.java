@@ -9,8 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 
 @Configuration
 public class DemoGatewayRecords implements GatewayRecords {
+
+
     @Override
-    public int support(HandlerMethod method, HttpServletRequest request) {
+    public int support(HandlerMethod method, HttpServletRequest request, RecordsContext context) {
         return 0;
     }
 

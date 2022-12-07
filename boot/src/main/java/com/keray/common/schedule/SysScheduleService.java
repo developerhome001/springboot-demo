@@ -8,7 +8,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.keray.common.SpringContextHolder;
-import com.keray.common.SysThreadPool;
+import com.keray.common.threadpool.SysThreadPool;
 import com.keray.common.Wrappers;
 import com.keray.common.entity.BSService;
 import com.keray.common.entity.IBSMapper;
@@ -50,7 +50,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

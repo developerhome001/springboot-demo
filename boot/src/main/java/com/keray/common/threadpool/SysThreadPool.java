@@ -1,10 +1,13 @@
-package com.keray.common;
+package com.keray.common.threadpool;
 
-import com.keray.common.threadpool.MemorySafeLinkedBlockingQueue;
+import com.keray.common.IContext;
+import com.keray.common.SpringContextHolder;
 import org.springframework.boot.autoconfigure.task.TaskSchedulingProperties;
 import org.springframework.boot.task.TaskSchedulerBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -16,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author by keray
  * date:2019/9/16 11:49
  */
+@Component
 public class SysThreadPool {
     private static final AtomicInteger COUNT = new AtomicInteger(0);
 
@@ -136,7 +140,8 @@ public class SysThreadPool {
         }
     }
 
-    public static void close() {
+    @PreDestroy
+    public void close() {
         threadPoolExecutor.shutdownNow();
         taskScheduler.shutdown();
     }

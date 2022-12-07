@@ -35,6 +35,10 @@ spring:
       date-time: yyyy-MM-dd HH:mm:ss
       date: yyyy-MM-dd
       time: HH:mm:ss
+  cache:
+    type: redis
+    ehcache:
+      config: classpath:baseEhcache.xml
   data:
     mongodb:
       auto-index-creation: true

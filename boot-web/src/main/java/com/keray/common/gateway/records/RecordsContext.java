@@ -3,6 +3,7 @@ package com.keray.common.gateway.records;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,5 +50,7 @@ public class RecordsContext {
      * 接口结束时间
      */
     private long endTime;
+
+    private final Map<String, Object> other = new HashMap<>(4);
 
 }

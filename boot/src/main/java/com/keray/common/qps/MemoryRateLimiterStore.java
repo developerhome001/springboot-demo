@@ -1,6 +1,6 @@
 package com.keray.common.qps;
 
-import com.keray.common.SysThreadPool;
+import com.keray.common.threadpool.SysThreadPool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.support.CronTrigger;
 
