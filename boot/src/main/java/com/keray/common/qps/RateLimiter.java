@@ -115,7 +115,7 @@ public class RateLimiter {
         } else {
             log.warn("qps失败     调试qps存储数据:{}", store.getStoreData(key));
             // todo 先放行  有bug
-            return;
+//            return;
         }
         if (rejectStrategy == RejectStrategy.noting) return;
         if (rejectStrategy == RejectStrategy.throw_exception) throw new QPSFailException();
