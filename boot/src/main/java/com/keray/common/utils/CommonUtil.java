@@ -297,6 +297,10 @@ public final class CommonUtil {
      * @return
      */
     public static <T extends Comparable<T>> boolean binarySearch(T[] arr, T target) {
+        return binarySearchIndex(arr, target) > -1;
+    }
+
+    public static <T extends Comparable<T>> int binarySearchIndex(T[] arr, T target) {
         int start = 0;
         int end = arr.length - 1;
         while (start <= end) {
@@ -306,10 +310,10 @@ public final class CommonUtil {
             } else if (target.compareTo(arr[middle]) > 0) {
                 start = middle + 1;
             } else {
-                return true;
+                return middle;
             }
         }
-        return false;
+        return -1;
     }
 
     /**
