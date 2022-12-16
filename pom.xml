@@ -45,18 +45,18 @@
             <dependency>
                 <groupId>com.keray.spring</groupId>
                 <artifactId>boot</artifactId>
-                <version>1.0.1</version>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.keray.spring</groupId>
                 <artifactId>boot-web</artifactId>
-                <version>1.0.1</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.keray.spring</groupId>
                 <artifactId>plugins</artifactId>
-                <version>1.0.1</version>
+                <version>${project.version}</version>
             </dependency>
 
         </dependencies>
@@ -85,19 +85,19 @@
         </repository>
     </distributionManagement>
 
-<!--    <distributionManagement>-->
-<!--        <repository>-->
-<!--            <id>caishi-releases</id>-->
-<!--            <url>https://packages.aliyun.com/maven/repository/2019533-release-lB4NJc/</url>-->
-<!--        </repository>-->
-<!--    </distributionManagement>-->
+    <!--    <distributionManagement>-->
+    <!--        <repository>-->
+    <!--            <id>caishi-releases</id>-->
+    <!--            <url>https://packages.aliyun.com/maven/repository/2019533-release-lB4NJc/</url>-->
+    <!--        </repository>-->
+    <!--    </distributionManagement>-->
 
 
-<!--    <distributionManagement>-->
-<!--        <repository>-->
-<!--            <id>cqvip-snapshots</id>-->
-<!--            <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>-->
-<!--        </repository>-->
-<!--    </distributionManagement>-->
+<!--        <distributionManagement>-->
+<!--            <repository>-->
+<!--                <id>cqvip-snapshots</id>-->
+<!--                <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>-->
+<!--            </repository>-->
+<!--        </distributionManagement>-->
 
 </project>
