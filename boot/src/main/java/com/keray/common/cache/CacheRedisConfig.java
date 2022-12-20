@@ -34,6 +34,7 @@ import java.time.Duration;
 @Configuration
 @Import(CacheProperties.class)
 @EnableCaching
+@ConditionalOnClass(RedisTemplate.class)
 public class CacheRedisConfig extends AbstractCachingConfiguration {
 
     @ConditionalOnProperty(value = "spring.cache.type", havingValue = "redis")
