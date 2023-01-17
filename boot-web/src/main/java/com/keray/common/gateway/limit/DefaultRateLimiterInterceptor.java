@@ -22,7 +22,7 @@ public class DefaultRateLimiterInterceptor extends AbstractRateLimiterIntercepto
         var uuid = annDataGetKey(data);
         if (StrUtil.isNotEmpty(uuid)) {
             try {
-                rateLimiter.acquire(uuid, data.namespace(), data.maxRate(), data.recoveryCount(), data.millisecond(), data.appointCron(), data.recoveryCount(), data.rejectStrategy());
+                rateLimiter.acquire(uuid, data.namespace(), data.maxRate(), 1, data.millisecond(), data.appointCron(), data.recoveryCount(), data.rejectStrategy());
             } catch (QPSFailException e) {
                 if (StrUtil.isNotBlank(data.rejectMessage())) throw new QPSFailException(data.rejectMessage());
                 throw e;

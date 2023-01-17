@@ -54,7 +54,7 @@ public class RateLimiter {
      * @throws InterruptedException
      */
     public static <L> void acquire(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, int acquireCount, int millisecond, String appointCron, int recoveryCount, RejectStrategy rejectStrategy, int waitTime) throws QPSFailException, InterruptedException {
-        key = namespace + key;
+        key = String.format("%s:%s", namespace, key);
         privateAcquire(key, namespace, store, maxRate, distributedLock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime);
 
     }

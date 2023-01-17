@@ -65,6 +65,10 @@
             <artifactId>spring-data-redis</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+        </dependency>
 
     </dependencies>
 </project>
