@@ -2,6 +2,7 @@ package com.keray.common.gateway.limit;
 
 import com.keray.common.IUserContext;
 import com.keray.common.annotation.RateLimiterApi;
+import com.keray.common.annotation.RateLimiterGroup;
 import com.keray.common.exception.QPSFailException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -32,18 +33,26 @@ public class RateLimiterHandlerInterceptor implements HandlerInterceptor, WebMvc
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (handler instanceof HandlerMethod handlerMethod) {
+            var group = handlerMethod.getMethodAnnotation(RateLimiterGroup.class);
+            if (group != null) {
+                for (var da : group.value()) exec(da, request, response, handler);
+            }
             var data = handlerMethod.getMethodAnnotation(RateLimiterApi.class);
-            if (data == null) {
-                return true;
-            }
-            try {
-                rateLimiterInterceptor.interceptor(data, request, response, handler);
-            } catch (QPSFailException failException) {
-                log.warn("qps异常 ip={},duid={},userId={},agent={}", userContext.currentUserId(), userContext.getDuid(), userContext.currentUserId(), request.getHeader("User-Agent"));
-                throw failException;
-            }
+            exec(data, request, response, handler);
         }
         return HandlerInterceptor.super.preHandle(request, response, handler);
+    }
+
+    private void exec(RateLimiterApi data, HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if (data == null) {
+            return;
+        }
+        try {
+            rateLimiterInterceptor.interceptor(data, request, response, handler);
+        } catch (QPSFailException failException) {
+            log.warn("qps异常 ip={},duid={},userId={},agent={}", userContext.currentUserId(), userContext.getDuid(), userContext.currentUserId(), request.getHeader("User-Agent"));
+            throw failException;
+        }
     }
 
     @Override

@@ -29,7 +29,7 @@ public class UserContext implements IUserContext<Object> {
 
     @Override
     public String getDuid() {
-        return null;
+        return "12345";
     }
 
     @Override
@@ -49,7 +49,7 @@ public class UserContext implements IUserContext<Object> {
 
     @Override
     public String currentIp() {
-        return null;
+        return "127.0.0.1";
     }
 
     @Override

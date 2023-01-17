@@ -2,6 +2,8 @@ package com.keray.common.annotation;
 
 import com.keray.common.gateway.limit.RateLimiterApiTarget;
 import com.keray.common.qps.RejectStrategy;
+import com.keray.common.qps.spring.RateLimiterBean;
+import com.keray.common.qps.spring.RedisRateLimiterBean;
 
 import java.lang.annotation.*;
 
@@ -26,10 +28,16 @@ public @interface RateLimiterApi {
 
     /**
      * 下一次产生令牌的时间间隔（毫秒）
-     *
+     * 当存在指定时间时该值无效
      * @return
      */
     int millisecond() default 1000;
+
+    /**
+     * 指定时间恢复
+     * @return
+     */
+    String appointCron() default "";
 
     /**
      * 下一次产生令牌的令牌数量
@@ -54,5 +62,19 @@ public @interface RateLimiterApi {
      * @return
      */
     RejectStrategy rejectStrategy() default RejectStrategy.throw_exception;
+
+    /**
+     * QPS拒接错误文案
+     *
+     * @return
+     */
+    String rejectMessage() default "";
+
+    /**
+     * 默认的令牌桶
+     *
+     * @return
+     */
+    String bean() default "redisRateLimiterBean";
 
 }

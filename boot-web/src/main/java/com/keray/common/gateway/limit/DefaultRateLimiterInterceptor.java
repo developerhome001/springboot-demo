@@ -19,9 +19,14 @@ public class DefaultRateLimiterInterceptor extends AbstractRateLimiterIntercepto
 
     @Override
     public void interceptor(RateLimiterApi data, HttpServletRequest request, HttpServletResponse response, Object handler) throws InterruptedException, QPSFailException {
-        var key = annDataGetKey(data);
-        if (StrUtil.isNotEmpty(key)) {
-            rateLimiter.acquire(key, data.namespace(), data.maxRate(), 1, data.millisecond(), data.recoveryCount(), data.rejectStrategy());
+        var uuid = annDataGetKey(data);
+        if (StrUtil.isNotEmpty(uuid)) {
+            try {
+                rateLimiter.acquire(uuid, data.namespace(), data.maxRate(), data.recoveryCount(), data.millisecond(), data.appointCron(), data.recoveryCount(), data.rejectStrategy());
+            } catch (QPSFailException e) {
+                if (StrUtil.isNotBlank(data.rejectMessage())) throw new QPSFailException(data.rejectMessage());
+                throw e;
+            }
         }
     }
 }

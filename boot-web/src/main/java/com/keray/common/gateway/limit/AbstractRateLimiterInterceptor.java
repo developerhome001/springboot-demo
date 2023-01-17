@@ -16,9 +16,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
             return data.namespace();
         } else if (data.target() == RateLimiterApiTarget.ip) {
             return userContext.currentIp();
-        } else if (data.target() == RateLimiterApiTarget.duid) {
-            return userContext.getDuid();
-        } else if (data.target() == RateLimiterApiTarget.userOrDuid) {
+        } else if (data.target() == RateLimiterApiTarget.user) {
             if (userContext.loginStatus()) return userContext.currentUserId();
             return userContext.getDuid();
         } else {

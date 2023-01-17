@@ -3,7 +3,9 @@ package com.keray.common.exception;
 import com.keray.common.CommonResultCode;
 
 public class QPSFailException extends Exception implements CodeException {
+
     public QPSFailException() {
+        super(CommonResultCode.limitedAccess.getMessage());
     }
 
     public QPSFailException(String message) {
@@ -14,11 +16,6 @@ public class QPSFailException extends Exception implements CodeException {
     @Override
     public int getCode() {
         return CommonResultCode.limitedAccess.getCode();
-    }
-
-    @Override
-    public String getMessage() {
-        return CommonResultCode.limitedAccess.getMessage();
     }
 
 }
