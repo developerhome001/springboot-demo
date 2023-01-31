@@ -2,7 +2,6 @@ package com.keray.common.qps;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.cron.CronUtil;
 import cn.hutool.json.JSONUtil;
 import com.keray.common.exception.QPSFailException;
 import com.keray.common.lock.DistributedLock;
@@ -19,47 +18,54 @@ import java.time.LocalDateTime;
 @Slf4j
 public class RateLimiter {
 
-    public static <L> void acquire(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, RejectStrategy rejectStrategy) throws QPSFailException, InterruptedException {
-        key = namespace + key;
-        privateAcquire(key, namespace, store, maxRate, distributedLock, 1, 1000, null, 1, rejectStrategy, 1000 * 5);
-    }
-
-    public static <L> void acquire(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, int acquireCount, RejectStrategy rejectStrategy) throws QPSFailException, InterruptedException {
-        key = namespace + key;
-        privateAcquire(key, namespace, store, maxRate, distributedLock, acquireCount, 1000, null, 1, rejectStrategy, 1000 * 5);
-    }
-
-    public static <L> void acquire(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, int acquireCount, int recoveryCount, RejectStrategy rejectStrategy) throws QPSFailException, InterruptedException {
-        key = namespace + key;
-        privateAcquire(key, namespace, store, maxRate, distributedLock, acquireCount, 1000, null, recoveryCount, rejectStrategy, 1000 * 5);
-    }
-
-
-    public static <L> void acquire(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, int acquireCount, int millisecond, int recoveryCount, RejectStrategy rejectStrategy) throws QPSFailException, InterruptedException {
-        key = namespace + key;
-        privateAcquire(key, namespace, store, maxRate, distributedLock, acquireCount, millisecond, null, recoveryCount, rejectStrategy, millisecond * 5);
-    }
-
     /**
-     * @param key
-     * @param acquireCount    获取令牌数量
+     * @param key             令牌key
      * @param namespace       令牌桶空间名
      * @param store           令牌桶数据仓库
      * @param maxRate         最大令牌数量
+     * @param distributedLock 分布式锁
+     * @param acquireCount    获取令牌数量
      * @param millisecond     下次产生令牌时间间隔（毫秒）
+     * @param appointCron     在指定的Cron时间点产生令牌
      * @param recoveryCount   下次产生令牌数量
      * @param rejectStrategy  令牌限流策略
-     * @param distributedLock 分布式锁
      * @param waitTime        等待时间
-     * @throws InterruptedException
+     * @param waitSpeed       等待时间间隔
+     * @param <L>
+     * @throws InterruptedException 异常中断
+     * @throws QPSFailException     QPS阻止
      */
-    public static <L> void acquire(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, int acquireCount, int millisecond, String appointCron, int recoveryCount, RejectStrategy rejectStrategy, int waitTime) throws QPSFailException, InterruptedException {
+    public static <L> void acquire(String key,
+                                   String namespace,
+                                   RateLimiterStore store,
+                                   int maxRate,
+                                   DistributedLock<L> distributedLock,
+                                   int acquireCount,
+                                   int millisecond,
+                                   String appointCron,
+                                   int recoveryCount,
+                                   RejectStrategy rejectStrategy,
+                                   int waitTime,
+                                   int waitSpeed
+    ) throws QPSFailException, InterruptedException {
         key = String.format("%s:%s", namespace, key);
-        privateAcquire(key, namespace, store, maxRate, distributedLock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime);
+        privateAcquire(key, namespace, store, maxRate, distributedLock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime, waitSpeed);
 
     }
 
-    private static <L> void privateAcquire(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, int acquireCount, int millisecond, String appointCron, int recoveryCount, RejectStrategy rejectStrategy, int waitTime) throws InterruptedException, QPSFailException {
+    private static <L> void privateAcquire(String key,
+                                           String namespace,
+                                           RateLimiterStore store,
+                                           int maxRate,
+                                           DistributedLock<L> distributedLock,
+                                           int acquireCount,
+                                           int millisecond,
+                                           String appointCron,
+                                           int recoveryCount,
+                                           RejectStrategy rejectStrategy,
+                                           int waitTime,
+                                           int waitSpeed
+    ) throws InterruptedException, QPSFailException {
         if (maxRate < 1 || recoveryCount < 1 || millisecond < 1)
             throw new RuntimeException("最大令牌数 间隔时间 下次产生令牌上不允许小于1");
         L lock = null;
@@ -93,7 +99,7 @@ public class RateLimiter {
                     locaRelease = true;
                 }
                 // 令牌不足
-                reject(key, namespace, store, maxRate, distributedLock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime);
+                reject(key, namespace, store, maxRate, distributedLock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime, waitSpeed);
             } else {
                 // 正常拿到令牌返回
                 rateBalance -= acquireCount;
@@ -111,25 +117,25 @@ public class RateLimiter {
      *
      * @param key
      */
-    private static <L> void reject(String key, String namespace, RateLimiterStore store, int maxRate, DistributedLock<L> distributedLock, int acquireCount, int millisecond, String appointCron, int recoveryCount, RejectStrategy rejectStrategy, int waitTime) throws InterruptedException, QPSFailException {
-        log.warn("RateLimiter warn:{}", key);
-        if (key.equals("system:14.111.48.40")) {
-            log.warn("调试qps存储数据:{} {} {} {}", store.getStoreData(key), maxRate, millisecond, acquireCount);
-            log.warn("调试qps存储数据:{}", JSONUtil.toJsonStr(((MemoryRateLimiterStore) store).getStore()));
-        } else {
-            log.warn("qps失败     调试qps存储数据:{}", store.getStoreData(key));
-        }
+    private static <L> void reject(String key,
+                                   String namespace,
+                                   RateLimiterStore store,
+                                   int maxRate,
+                                   DistributedLock<L> distributedLock,
+                                   int acquireCount,
+                                   int millisecond,
+                                   String appointCron,
+                                   int recoveryCount,
+                                   RejectStrategy rejectStrategy,
+                                   int waitTime,
+                                   int waitSpeed
+    ) throws InterruptedException, QPSFailException {
         if (rejectStrategy == RejectStrategy.noting) return;
         if (rejectStrategy == RejectStrategy.throw_exception) throw new QPSFailException();
-        if (rejectStrategy == RejectStrategy.wait) {
-            for (var i = 0; i < waitTime / 100; i++) {
-                Thread.sleep(100);
-                try {
-                    privateAcquire(key, namespace, store, maxRate, distributedLock, acquireCount, millisecond, appointCron, recoveryCount, RejectStrategy.throw_exception, waitTime);
-                    return;
-                } catch (QPSFailException ignore) {
-                }
-            }
+        if (rejectStrategy == RejectStrategy.wait && waitTime > 0) {
+            Thread.sleep(waitSpeed);
+            privateAcquire(key, namespace, store, maxRate, distributedLock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime - waitSpeed, waitSpeed);
+            return;
         }
         throw new QPSFailException();
     }

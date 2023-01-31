@@ -6,7 +6,7 @@
     <groupId>com.keray.spring</groupId>
     <artifactId>dependencies</artifactId>
 
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 
     <packaging>pom</packaging>
 
@@ -78,26 +78,55 @@
             <version>5.8.10</version>
         </dependency>
     </dependencies>
-    <distributionManagement>
-        <repository>
-            <id>keray-releases</id>
-            <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>
-        </repository>
-    </distributionManagement>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <!-- 要将源码放上去，需要加入这个插件 -->
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <configuration>
+                    <attach>true</attach>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
-    <!--    <distributionManagement>-->
-    <!--        <repository>-->
-    <!--            <id>caishi-releases</id>-->
-    <!--            <url>https://packages.aliyun.com/maven/repository/2019533-release-lB4NJc/</url>-->
-    <!--        </repository>-->
-    <!--    </distributionManagement>-->
-
+<!--    <distributionManagement>-->
+<!--        <repository>-->
+<!--            <id>keray-releases</id>-->
+<!--            <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>-->
+<!--        </repository>-->
+<!--    </distributionManagement>-->
 
 <!--        <distributionManagement>-->
 <!--            <repository>-->
-<!--                <id>cqvip-snapshots</id>-->
-<!--                <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>-->
+<!--                <id>caishi-releases</id>-->
+<!--                <url>https://packages.aliyun.com/maven/repository/2019533-release-lB4NJc/</url>-->
 <!--            </repository>-->
 <!--        </distributionManagement>-->
+
+
+            <distributionManagement>
+                <repository>
+                    <id>cqvip-snapshots</id>
+                    <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>
+                </repository>
+            </distributionManagement>
 
 </project>

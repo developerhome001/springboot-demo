@@ -18,8 +18,8 @@ public class MemoryRateLimiterBean implements RateLimiterBean<String> {
     private final DistributedLock<String> lock = SingleServerLock.get();
 
 
-    public void acquire(String key, String namespace, int maxRate, int acquireCount, int millisecond, String appointCron, int recoveryCount, RejectStrategy rejectStrategy, int waitTime) throws QPSFailException, InterruptedException {
-        RateLimiter.acquire(key, namespace, rateLimiterStore, maxRate, lock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime);
+    public void acquire(String key, String namespace, int maxRate, int acquireCount, int millisecond, String appointCron, int recoveryCount, RejectStrategy rejectStrategy, int waitTime, int waitSpeed) throws QPSFailException, InterruptedException {
+        RateLimiter.acquire(key, namespace, rateLimiterStore, maxRate, lock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime, waitSpeed);
     }
 
 }
