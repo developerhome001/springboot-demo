@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dependencies</artifactId>
         <groupId>com.keray.spring</groupId>
-        <version>1.0.4</version>
+        <version>1.0.5</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -82,6 +82,11 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.googlecode.java-ipv6</groupId>
+            <artifactId>java-ipv6</artifactId>
+            <version>0.17</version>
+        </dependency>
 
     </dependencies>
 </project>
