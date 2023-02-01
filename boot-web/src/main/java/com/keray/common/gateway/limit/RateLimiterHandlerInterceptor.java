@@ -50,7 +50,7 @@ public class RateLimiterHandlerInterceptor implements HandlerInterceptor, WebMvc
         try {
             rateLimiterInterceptor.interceptor(data, request, response, handler);
         } catch (QPSFailException failException) {
-            log.warn("qps异常 ip={},duid={},userId={},agent={}", userContext.currentUserId(), userContext.getDuid(), userContext.currentUserId(), request.getHeader("User-Agent"));
+            log.warn("qps异常 ip={},duid={},userId={},agent={}", userContext.currentIp(), userContext.getDuid(), userContext.currentUserId(), request.getHeader("User-Agent"));
             throw failException;
         }
     }
