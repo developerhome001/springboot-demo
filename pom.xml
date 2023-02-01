@@ -6,7 +6,7 @@
     <groupId>com.keray.spring</groupId>
     <artifactId>dependencies</artifactId>
 
-    <version>1.0.5</version>
+    <version>1.0.6</version>
 
     <packaging>pom</packaging>
 
@@ -114,19 +114,19 @@
 <!--        </repository>-->
 <!--    </distributionManagement>-->
 
-<!--        <distributionManagement>-->
-<!--            <repository>-->
-<!--                <id>caishi-releases</id>-->
-<!--                <url>https://packages.aliyun.com/maven/repository/2019533-release-lB4NJc/</url>-->
-<!--            </repository>-->
-<!--        </distributionManagement>-->
+        <distributionManagement>
+            <repository>
+                <id>caishi-releases</id>
+                <url>https://packages.aliyun.com/maven/repository/2019533-release-lB4NJc/</url>
+            </repository>
+        </distributionManagement>
 
 
-            <distributionManagement>
-                <repository>
-                    <id>cqvip-snapshots</id>
-                    <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>
-                </repository>
-            </distributionManagement>
+<!--            <distributionManagement>-->
+<!--                <repository>-->
+<!--                    <id>cqvip-snapshots</id>-->
+<!--                    <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>-->
+<!--                </repository>-->
+<!--            </distributionManagement>-->
 
 </project>

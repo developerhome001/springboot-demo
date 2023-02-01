@@ -29,12 +29,14 @@ public @interface RateLimiterApi {
     /**
      * 下一次产生令牌的时间间隔（毫秒）
      * 当存在指定时间时该值无效
+     *
      * @return
      */
     int millisecond() default 1000;
 
     /**
      * 指定时间恢复
+     *
      * @return
      */
     String appointCron() default "";
@@ -69,6 +71,20 @@ public @interface RateLimiterApi {
      * @return
      */
     String rejectMessage() default "";
+
+    /**
+     * 拒绝时等待的时间
+     *
+     * @return
+     */
+    int waitTime() default 5000;
+
+    /**
+     * 拒绝等待时的唤醒间隔时间
+     *
+     * @return
+     */
+    int waitSpeed() default 50;
 
     /**
      * 默认的令牌桶
