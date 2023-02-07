@@ -55,11 +55,8 @@ import java.util.List;
  * @author keray
  */
 @Configuration(value = "kerayRedisConfig", proxyBeanMethods = false)
-@ConditionalOnClass(value = {RedisProperties.class, RedisClient.class})
 @ConfigurationProperties("spring.redis")
-@ConditionalOnProperty(name = "spring.redis.client-type", havingValue = "lettuce", matchIfMissing = true)
 @Slf4j
-@Lazy
 public class KerayRedisConfig {
 
 
@@ -105,7 +102,6 @@ public class KerayRedisConfig {
 
     @Bean
     @Primary
-    @ConditionalOnMissingBean(name = "redisTemplate")
     public RedisTemplate redisTemplate(
             ObjectProvider<LettuceClientConfigurationBuilderCustomizer> builderCustomizers,
             ClientResources clientResources) {
@@ -203,16 +199,16 @@ public class KerayRedisConfig {
                                                  ObjectProvider<LettuceClientConfigurationBuilderCustomizer> builderCustomizers,
                                                  ClientResources clientResources) {
         var s = getSentinelConfig();
-        LettuceConnectionFactory factory = null;
-        if (s != null) {
-            s.setDatabase(db);
-            factory = new LettuceConnectionFactory(s, getLettuceClientConfiguration(builderCustomizers, clientResources, getProperties().getLettuce().getPool()));
-        }
         var c = getClusterConfiguration();
+        var l = getStandaloneConfig();
+        LettuceConnectionFactory factory = null;
+
         if (c != null)
             factory = new LettuceConnectionFactory(c, getLettuceClientConfiguration(builderCustomizers, clientResources, getProperties().getLettuce().getPool()));
-        var l = getStandaloneConfig();
-        if (l != null) {
+        else if (s != null) {
+            s.setDatabase(db);
+            factory = new LettuceConnectionFactory(s, getLettuceClientConfiguration(builderCustomizers, clientResources, getProperties().getLettuce().getPool()));
+        } else if (l != null) {
             l.setDatabase(db);
             factory = new LettuceConnectionFactory(l, getLettuceClientConfiguration(builderCustomizers, clientResources, getProperties().getLettuce().getPool()));
         }
