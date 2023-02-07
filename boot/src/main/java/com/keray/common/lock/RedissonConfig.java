@@ -8,22 +8,15 @@ import org.redisson.config.Config;
 import org.redisson.spring.data.connection.RedissonConnectionFactory;
 import org.redisson.spring.starter.RedissonAutoConfiguration;
 import org.redisson.spring.starter.RedissonAutoConfigurationCustomizer;
-import org.redisson.spring.starter.RedissonProperties;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.util.ReflectionUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Configuration
 @ConditionalOnClass(RedissonAutoConfiguration.class)
@@ -35,17 +28,11 @@ public class RedissonConfig {
     private final KerayRedisConfig kerayRedisConfig;
     private final RedisProperties redisProperties;
 
-    private final RedissonProperties redissonProperties;
-
-    @javax.annotation.Resource
-    private ApplicationContext ctx;
-
     private final List<RedissonAutoConfigurationCustomizer> redissonAutoConfigurationCustomizers;
 
-    public RedissonConfig(KerayRedisConfig kerayRedisConfig, RedisProperties redisProperties, RedissonProperties redissonProperties, List<RedissonAutoConfigurationCustomizer> redissonAutoConfigurationCustomizers) {
+    public RedissonConfig(KerayRedisConfig kerayRedisConfig, RedisProperties redisProperties, List<RedissonAutoConfigurationCustomizer> redissonAutoConfigurationCustomizers) {
         this.kerayRedisConfig = kerayRedisConfig;
         this.redisProperties = redisProperties;
-        this.redissonProperties = redissonProperties;
         this.redissonAutoConfigurationCustomizers = redissonAutoConfigurationCustomizers;
     }
 
