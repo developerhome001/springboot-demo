@@ -1,19 +1,16 @@
 package com.keray.common;
 
 import cn.hutool.core.map.MapUtil;
-import com.keray.common.mysql.config.MybatisPlusContext;
-import org.springframework.lang.Nullable;
-import org.springframework.web.servlet.AsyncHandlerInterceptor;
+import com.keray.common.context.ThreadCacheContext;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 /**
  * @author by keray
  * date:2019/7/26 14:21
  */
-public interface IUserContext<T> extends IContext, AsyncHandlerInterceptor {
+public interface IUserContext<T> extends IContext, ThreadCacheContext {
 
 
     HttpServletRequest currentRequest();
@@ -53,8 +50,4 @@ public interface IUserContext<T> extends IContext, AsyncHandlerInterceptor {
         setCurrentRequest(null);
     }
 
-    @Override
-    default void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) throws Exception {
-        MybatisPlusContext.remove();
-    }
 }

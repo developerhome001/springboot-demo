@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dependencies</artifactId>
         <groupId>com.keray.spring</groupId>
-        <version>1.0.7</version>
+        <version>1.0.8</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -72,13 +72,11 @@
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
-            <version>${project.redisson}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>${project.mybatis-plus}</version>
             <scope>provided</scope>
         </dependency>
 

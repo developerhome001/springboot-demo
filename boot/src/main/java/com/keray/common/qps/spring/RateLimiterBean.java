@@ -45,4 +45,9 @@ public interface RateLimiterBean<L> {
     default void acquire(String key, String namespace, int maxRate, int acquireCount, int recoveryCount, RejectStrategy rejectStrategy) throws QPSFailException, InterruptedException {
         acquire(key, namespace, maxRate, acquireCount, 1000, null, recoveryCount, rejectStrategy, 5000, 50);
     }
+
+    default void acquire(String key, String namespace, int maxRate, int acquireCount, int millisecond, int recoveryCount, RejectStrategy rejectStrategy, int waitTime) throws QPSFailException, InterruptedException {
+        acquire(key, namespace, maxRate, acquireCount, millisecond, null, recoveryCount, rejectStrategy, waitTime);
+    }
+
 }
