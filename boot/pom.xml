@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dependencies</artifactId>
         <groupId>com.keray.spring</groupId>
-        <version>1.0.8</version>
+        <version>1.0.9</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -51,11 +51,10 @@
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-commons</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-extension</artifactId>
-            <version>${project.mybatis-plus}</version>
+            <groupId>com.googlecode.java-ipv6</groupId>
+            <artifactId>java-ipv6</artifactId>
+            <version>0.17</version>
         </dependency>
 
         <dependency>
@@ -79,17 +78,24 @@
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
-            <groupId>com.googlecode.java-ipv6</groupId>
-            <artifactId>java-ipv6</artifactId>
-            <version>0.17</version>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

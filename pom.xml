@@ -6,7 +6,7 @@
     <groupId>com.keray.spring</groupId>
     <artifactId>dependencies</artifactId>
 
-    <version>1.0.8</version>
+    <version>1.0.9</version>
 
     <packaging>pom</packaging>
 
@@ -21,6 +21,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <boot-version>2.6.3</boot-version>
+        <rocketmq-version>2.2.0</rocketmq-version>
         <project.mybatis-plus>3.5.0</project.mybatis-plus>
         <project.redisson>3.16.7</project.redisson>
     </properties>
@@ -64,6 +65,7 @@
                 <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${project.mybatis-plus}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson-spring-boot-starter</artifactId>
@@ -73,6 +75,12 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus</artifactId>
                 <version>${project.mybatis-plus}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-spring-boot-starter</artifactId>
+                <version>${rocketmq-version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -122,26 +130,26 @@
         </plugins>
     </build>
 
-<!--    <distributionManagement>-->
-<!--        <repository>-->
-<!--            <id>keray-releases</id>-->
-<!--            <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>-->
-<!--        </repository>-->
-<!--    </distributionManagement>-->
+    <!--    <distributionManagement>-->
+    <!--        <repository>-->
+    <!--            <id>keray-releases</id>-->
+    <!--            <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>-->
+    <!--        </repository>-->
+    <!--    </distributionManagement>-->
 
-        <distributionManagement>
-            <repository>
-                <id>caishi-releases</id>
-                <url>https://packages.aliyun.com/maven/repository/2019533-release-lB4NJc/</url>
-            </repository>
-        </distributionManagement>
+    <!--        <distributionManagement>-->
+    <!--            <repository>-->
+    <!--                <id>caishi-releases</id>-->
+    <!--                <url>https://packages.aliyun.com/maven/repository/2019533-release-lB4NJc/</url>-->
+    <!--            </repository>-->
+    <!--        </distributionManagement>-->
 
 
-<!--            <distributionManagement>-->
-<!--                <repository>-->
-<!--                    <id>cqvip-snapshots</id>-->
-<!--                    <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>-->
-<!--                </repository>-->
-<!--            </distributionManagement>-->
+    <distributionManagement>
+        <repository>
+            <id>cqvip-snapshots</id>
+            <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>
+        </repository>
+    </distributionManagement>
 
 </project>
