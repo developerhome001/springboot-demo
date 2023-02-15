@@ -86,7 +86,7 @@ public class CommonExceptionHandler {
     @ExceptionHandler({MissingServletRequestParameterException.class})
     @ResponseBody
     public Object resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, MissingServletRequestParameterException exception) {
-        log.warn(requestMessage(request) + "\nMissingServletRequestParameterException..........", exception);
+        log.error(requestMessage(request) + "\nMissingServletRequestParameterException..........", exception);
         return Result.fail(CommonResultCode.argumentNotPresent.getCode(), exception.getParameterName());
     }
 
