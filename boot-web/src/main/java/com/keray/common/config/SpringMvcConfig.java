@@ -1,6 +1,11 @@
 package com.keray.common.config;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JacksonStdImpl;
+import com.fasterxml.jackson.databind.ser.std.NumberSerializers;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
@@ -24,6 +29,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.Resource;
 import javax.websocket.server.ServerEndpointConfig;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -62,6 +68,8 @@ public class SpringMvcConfig implements WebMvcConfigurer {
         builder.serializerByType(LocalDateTime.class, new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT)));
         builder.serializerByType(LocalDate.class, new LocalDateSerializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT)));
         builder.serializerByType(LocalTime.class, new LocalTimeSerializer(DateTimeFormatter.ofPattern(DEFAULT_TIME_FORMAT)));
+        builder.serializerByType(Long.class, new LongSerializer(Long.class));
+        builder.serializerByType(Long.TYPE, new LongSerializer(Long.TYPE));
         builder.deserializerByType(LocalDateTime.class, new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT)));
         builder.deserializerByType(LocalDate.class, new LocalDateDeserializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT)));
         builder.deserializerByType(LocalTime.class, new LocalTimeDeserializer(DateTimeFormatter.ofPattern(DEFAULT_TIME_FORMAT)));
@@ -120,4 +128,29 @@ public class SpringMvcConfig implements WebMvcConfigurer {
         }
     }
 
+    @JacksonStdImpl
+    public class LongSerializer extends NumberSerializers.Base<Object> {
+        /**
+         * 2^52   js的最大精度是2^53
+         */
+        private final static long MAX = 0x000fffffffffffffL;
+
+        public LongSerializer(Class<?> cls) {
+            super(cls, JsonParser.NumberType.LONG, "number");
+        }
+
+        @Override
+        public void serialize(Object value, JsonGenerator gen,
+                              SerializerProvider provider) throws IOException {
+            Long val = (Long) value;
+            if (val > MAX) {
+                gen.writeString(String.valueOf(val));
+                return;
+            }
+            gen.writeNumber(val.longValue());
+        }
+    }
+
+    public static void main(String[] args) {
+    }
 }
