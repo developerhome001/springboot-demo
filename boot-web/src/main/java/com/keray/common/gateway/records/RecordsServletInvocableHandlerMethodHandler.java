@@ -44,11 +44,12 @@ public class RecordsServletInvocableHandlerMethodHandler implements ServletInvoc
         long startTime = System.currentTimeMillis();
         Object result = callback.get();
         long endTime = System.currentTimeMillis();
+        var recordsAni = handlerMethod.getMethodAnnotation(ApiRecords.class);
         try {
             // 生成记录上下文
             context.setArgs(args);
             context.setResult(result);
-            context.setUri(req.getRequestURI());
+            context.setUri(recordsAni == null ? req.getRequestURI() : recordsAni.value());
             context.setStartTime(startTime);
             context.setEndTime(endTime);
             context.setHeader(header(req));
