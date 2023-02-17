@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.exception.QPSFailException;
 import com.keray.common.qps.spring.RateLimiterBean;
+import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,7 +19,7 @@ public class DefaultRateLimiterInterceptor extends AbstractRateLimiterIntercepto
 
 
     @Override
-    public void interceptor(RateLimiterApi data, HttpServletRequest request, HttpServletResponse response, Object handler) throws InterruptedException, QPSFailException {
+    public void interceptor(RateLimiterApi data, HttpServletRequest request, HandlerMethod handler) throws InterruptedException, QPSFailException {
         var uuid = annDataGetKey(data);
         if (StrUtil.isNotEmpty(uuid)) {
             try {

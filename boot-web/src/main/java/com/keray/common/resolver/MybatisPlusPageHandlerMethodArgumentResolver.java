@@ -1,4 +1,4 @@
-package com.keray.common.handler;
+package com.keray.common.resolver;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
@@ -23,13 +23,13 @@ import java.util.Map;
  * @author by keray
  * date:2021/7/9 9:58 上午
  */
-public class MybatisPlusPageHandlerMethodReturnValueHandler implements HandlerMethodArgumentResolver {
+public class MybatisPlusPageHandlerMethodArgumentResolver implements HandlerMethodArgumentResolver {
 
     private final ServletModelAttributeMethodProcessor servletModelAttributeMethodProcessor = new ServletModelAttributeMethodProcessor(true);
 
     private final RequestResponseBodyMethodProcessor requestResponseBodyMethodProcessor;
 
-    public MybatisPlusPageHandlerMethodReturnValueHandler(List<HttpMessageConverter<?>> converters) {
+    public MybatisPlusPageHandlerMethodArgumentResolver(List<HttpMessageConverter<?>> converters) {
         requestResponseBodyMethodProcessor = new RequestResponseBodyMethodProcessor(converters);
     }
 

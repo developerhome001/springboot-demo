@@ -34,10 +34,10 @@ public class Api {
     @ApiResult
     @GetMapping("/test")
 //    @Cacheable(value = CacheConstants.SMALL_UP_UP)
-//    @RateLimiterGroup(value = {
-//            @RateLimiterApi(namespace = "test", maxRate = 2, appointCron = "0 0 * * * *", recoveryCount = 2),
-//            @RateLimiterApi(namespace = "test", maxRate = 5, appointCron = "0 0 * * * *", recoveryCount = 5, target = RateLimiterApiTarget.ip)
-//    })
+    @RateLimiterGroup(value = {
+            @RateLimiterApi(namespace = "test", maxRate = 2, appointCron = "0 0 * * * *", recoveryCount = 2),
+            @RateLimiterApi(namespace = "test", maxRate = 5, appointCron = "0 0 * * * *", recoveryCount = 5, target = RateLimiterApiTarget.ip)
+    })
     public Object checkHealth(@RequestParam(defaultValue = "aaa") String a) {
         var x = System.currentTimeMillis();
         redisTemplate.opsForValue().set("123", x, 10, TimeUnit.HOURS);

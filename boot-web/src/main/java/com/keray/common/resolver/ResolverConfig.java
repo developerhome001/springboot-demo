@@ -1,7 +1,6 @@
 package com.keray.common.resolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.keray.common.handler.MybatisPlusPageHandlerMethodReturnValueHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -48,7 +47,7 @@ public class ResolverConfig {
         resolverComposite.addResolver(new PageableHandlerMethodArgumentResolver());
         try {
             Class.forName("com.baomidou.mybatisplus.extension.plugins.pagination.Page");
-            resolverComposite.addResolver(new MybatisPlusPageHandlerMethodReturnValueHandler(adapter.getMessageConverters()));
+            resolverComposite.addResolver(new MybatisPlusPageHandlerMethodArgumentResolver(adapter.getMessageConverters()));
         }catch (ClassNotFoundException e) {
             log.warn("mybatis plus不存在");
         }
