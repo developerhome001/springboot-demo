@@ -19,7 +19,7 @@ import java.util.*;
  */
 
 @Slf4j
-@Configuration(proxyBeanMethods = false)
+@Configuration
 @ConditionalOnBean(GatewayRecords.class)
 public class RecordsServletInvocableHandlerMethodHandler implements ServletInvocableHandlerMethodHandler {
 

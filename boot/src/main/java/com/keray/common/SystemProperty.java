@@ -7,7 +7,11 @@ public class SystemProperty {
      */
     public static final String RESULT_OK_CODE = "RESULT_OK";
     /**
+     * result对象失败设置code值
+     */
+    public static final String RESULT_ERROR_CODE = "RESULT_ERROR";
+    /**
      * header头表示appid的key
      */
-    public static final String HEADER_APPID = "APPID";
+    public static final String HEADER_APPID = "HEADER_APPID";
 }

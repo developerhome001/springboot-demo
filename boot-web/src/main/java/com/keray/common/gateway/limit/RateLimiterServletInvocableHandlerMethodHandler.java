@@ -14,6 +14,9 @@ import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * QPS控制
+ */
 @Configuration
 @ConditionalOnBean(RateLimiterInterceptor.class)
 @Slf4j
@@ -29,6 +32,11 @@ public class RateLimiterServletInvocableHandlerMethodHandler implements ServletI
         this.userContext = userContext;
     }
 
+    /**
+     * 顺序应该在apilog，和Exception之后
+     *
+     * @return
+     */
     @Override
     public int getOrder() {
         return 300;

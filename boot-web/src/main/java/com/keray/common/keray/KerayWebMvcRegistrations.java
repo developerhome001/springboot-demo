@@ -2,7 +2,6 @@ package com.keray.common.keray;
 
 import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
 import com.keray.common.keray.factory.ServletInvocableHandlerMethodFactory;
-import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcRegistrations;
@@ -33,8 +32,7 @@ public class KerayWebMvcRegistrations implements WebMvcRegistrations, BeanPostPr
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        var clazz = AopUtils.getTargetClass(bean);
-        if (ServletInvocableHandlerMethodHandler.class.isAssignableFrom(clazz)) {
+        if (ServletInvocableHandlerMethodHandler.class.isAssignableFrom(bean.getClass())) {
             handlers.add((ServletInvocableHandlerMethodHandler) bean);
         }
         return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);

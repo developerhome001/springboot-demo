@@ -6,12 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.util.ProxyUtils;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Field;
@@ -61,7 +61,7 @@ public class DiamondManger implements BeanPostProcessor {
     }
 
     private void process(Object bean) throws Exception {
-        var clazz = AopUtils.getTargetClass(bean);
+        var clazz = ProxyUtils.getUserClass(bean);
         var fields = clazz.getDeclaredFields();
         for (var field : fields) {
             var ani = field.getAnnotation(Diamond.class);
