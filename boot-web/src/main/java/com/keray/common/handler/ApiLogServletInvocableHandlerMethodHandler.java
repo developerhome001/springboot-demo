@@ -3,8 +3,10 @@ package com.keray.common.handler;
 import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.keray.common.IUserContext;
 import com.keray.common.Result;
 import com.keray.common.SpringContextHolder;
+import com.keray.common.SystemProperty;
 import com.keray.common.annotation.ApiLogIgnore;
 import com.keray.common.entity.IBaseEntity;
 import javassist.ClassPool;
@@ -36,6 +38,9 @@ public class ApiLogServletInvocableHandlerMethodHandler implements ServletInvoca
 
     @Resource(name = "kObjectMapper")
     private ObjectMapper objectMapper;
+
+    @Resource
+    private IUserContext userContext;
 
     @Getter
     @Setter
@@ -78,7 +83,9 @@ public class ApiLogServletInvocableHandlerMethodHandler implements ServletInvoca
                     } catch (Exception e) {
                         log.error("api解析标志失败：", e);
                     }
-                    apiLog(result instanceof Result.FailResult || result instanceof Exception, result, url, flag, args, handlerMethod.getMethodParameters(), start, handlerMethod);
+                    apiLog(result instanceof Result.FailResult || result instanceof Exception,
+                            result, url, flag, args, handlerMethod.getMethodParameters(),
+                            start, handlerMethod, request);
                 }
             } catch (Exception e) {
                 log.error("api错误日志解析失败：", e);
@@ -94,15 +101,33 @@ public class ApiLogServletInvocableHandlerMethodHandler implements ServletInvoca
         }
     }
 
-    private void apiLog(boolean fail, Object result, String url, String flag, Object[] args, MethodParameter[] parameters, long start, HandlerMethod handlerMethod) throws JsonProcessingException {
+    private void apiLog(boolean fail,
+                        Object result,
+                        String url,
+                        String flag,
+                        Object[] args,
+                        MethodParameter[] parameters,
+                        long start,
+                        HandlerMethod handlerMethod,
+                        NativeWebRequest request
+    ) throws JsonProcessingException {
         StringBuilder builder = new StringBuilder();
         if (fail) {
             builder.append(System.lineSeparator()).append("============接口异常============").append(System.lineSeparator());
         } else {
             builder.append(System.lineSeparator()).append("============api start============").append(System.lineSeparator());
         }
+        var appid = "";
+        var appidHeader = System.getProperty(SystemProperty.HEADER_APPID);
+        if (appidHeader != null) {
+            appid = request.getHeader(appidHeader);
+        }
         builder.append("  flag:").append(flag).append(System.lineSeparator());
         builder.append("   url:").append(url).append(System.lineSeparator());
+        builder.append("    ip:").append(userContext.currentIp()).append(System.lineSeparator());
+        builder.append("   uid:").append(userContext.currentUserId()).append(System.lineSeparator());
+        builder.append("  duid:").append(userContext.getDuid()).append(System.lineSeparator());
+        builder.append(" appid:").append(appid).append(System.lineSeparator());
         builder.append("  args:").append(System.lineSeparator());
         for (int i = 0; i < parameters.length; i++) {
             String json = "json解析失败";
