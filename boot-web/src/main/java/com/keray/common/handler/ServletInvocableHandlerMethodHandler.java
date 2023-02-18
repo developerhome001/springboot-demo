@@ -5,6 +5,8 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.Map;
+
 /**
  * @author by keray
  * date:2020/6/3 9:34 上午
@@ -26,7 +28,16 @@ public interface ServletInvocableHandlerMethodHandler extends Ordered {
         return Integer.MAX_VALUE;
     }
 
-    default Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback callback) throws Exception {
+    /**
+     * @param handlerMethod
+     * @param args
+     * @param request
+     * @param threadLocal   上下文
+     * @param callback
+     * @return
+     * @throws Exception
+     */
+    default Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
         return callback.get();
     }
 }

@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
+import java.util.Map;
+
 /**
  * @author by keray
  * date:2020/9/7 9:36 下午
@@ -23,7 +25,7 @@ public class ResultServletInvocableHandlerMethodHandler implements ServletInvoca
     }
 
     @Override
-    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback callback) throws Exception {
+    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
         Object result = callback.get();
         ApiResult apiResult = handlerMethod.getMethodAnnotation(ApiResult.class);
         if (apiResult == null) {

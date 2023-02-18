@@ -131,16 +131,16 @@ public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerM
 
     @Override
     public Object invokeForRequest(NativeWebRequest request, ModelAndViewContainer mavContainer, Object... providedArgs) throws Exception {
-        Map<Object, Object> threadLocal = new HashMap<>();
+        Map<Object, Object> context = new HashMap<>();
         try {
-            Object[] args = getMethodArgumentValues(threadLocal, request, mavContainer, providedArgs);
-            return work(args, request, () -> doInvoke(args));
+            Object[] args = getMethodArgumentValues(context, request, mavContainer, providedArgs);
+            return work(args, request, context, () -> doInvoke(args));
         } finally {
-            threadLocal.clear();
+            context.clear();
         }
     }
 
-    protected Object work(Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback call) throws Exception {
+    protected Object work(Object[] args, NativeWebRequest request, Map<Object, Object> context, ServletInvocableHandlerMethodCallback call) throws Exception {
         if (handlers != null) {
             final AtomicInteger index = new AtomicInteger(0);
             AtomicReference<ServletInvocableHandlerMethodCallback> callback1 = new AtomicReference<>(null);
@@ -149,10 +149,10 @@ public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerM
                 if (index.get() == handlers.length) {
                     return call.get();
                 }
-                return handlers[index.get()].work(this, args, request, callback1.get());
+                return handlers[index.get()].work(this, args, request, context, callback1.get());
             };
             callback1.set(callback);
-            return handlers[index.get()].work(this, args, request, callback);
+            return handlers[index.get()].work(this, args, request, context, callback);
         } else {
             return call.get();
         }

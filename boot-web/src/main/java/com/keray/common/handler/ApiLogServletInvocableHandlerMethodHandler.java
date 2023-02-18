@@ -25,6 +25,7 @@ import javax.annotation.Resource;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -52,7 +53,7 @@ public class ApiLogServletInvocableHandlerMethodHandler implements ServletInvoca
     }
 
     @Override
-    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback callback) throws Exception {
+    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
         long start = System.currentTimeMillis();
         for (Object o : args) {
             if (o instanceof IBaseEntity) {

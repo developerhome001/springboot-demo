@@ -13,6 +13,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 /**
  * QPS控制
@@ -43,7 +44,7 @@ public class RateLimiterServletInvocableHandlerMethodHandler implements ServletI
     }
 
     @Override
-    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback callback) throws Exception {
+    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
         var req = request.getNativeRequest(HttpServletRequest.class);
         if (req == null) return callback.get();
         var group = handlerMethod.getMethodAnnotation(RateLimiterGroup.class);

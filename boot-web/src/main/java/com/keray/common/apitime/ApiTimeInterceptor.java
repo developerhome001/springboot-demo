@@ -1,9 +1,9 @@
 package com.keray.common.apitime;
 
+import com.keray.common.annotation.ApiTimeRecord;
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
 import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
 import com.keray.common.threadpool.SysThreadPool;
-import com.keray.common.annotation.ApiTimeRecord;
 import com.keray.common.utils.CommonUtil;
 import com.keray.common.utils.TimeUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Map;
 
 /**
  * @author by keray
@@ -38,7 +39,7 @@ public class ApiTimeInterceptor implements ServletInvocableHandlerMethodHandler 
     }
 
     @Override
-    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback callback) throws Exception {
+    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
         TimeData data = preHandle(handlerMethod);
         try {
             return callback.get();

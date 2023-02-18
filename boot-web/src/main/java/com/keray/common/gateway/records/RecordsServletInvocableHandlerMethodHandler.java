@@ -36,7 +36,7 @@ public class RecordsServletInvocableHandlerMethodHandler implements ServletInvoc
     }
 
     @Override
-    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback callback) throws Exception {
+    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
         HttpServletRequest req = request.getNativeRequest(HttpServletRequest.class);
         RecordsContext context = new RecordsContext();
         int status = gatewayRecords.support(handlerMethod, req, context);

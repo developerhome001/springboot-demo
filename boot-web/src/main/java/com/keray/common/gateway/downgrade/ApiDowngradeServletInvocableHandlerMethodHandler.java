@@ -106,7 +106,7 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
     }
 
     @Override
-    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback callback) throws Exception {
+    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
         var ani = handlerMethod.getMethodAnnotation(ApiDowngrade.class);
         // 没有服务器降级的接口不处理
         if (ani == null) return callback.get();

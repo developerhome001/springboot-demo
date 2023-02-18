@@ -10,6 +10,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * @author by keray
@@ -34,7 +35,7 @@ public class ExceptionServletInvocableHandlerMethodHandler<E extends Throwable> 
     }
 
     @Override
-    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, ServletInvocableHandlerMethodCallback callback) throws Exception {
+    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
         try {
             Object result = callback.get();
             if (result instanceof Result.FailResult && ((Result.FailResult<?, ?>) result).getError() != null) {
