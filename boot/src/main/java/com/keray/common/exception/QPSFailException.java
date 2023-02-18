@@ -4,18 +4,25 @@ import com.keray.common.CommonResultCode;
 
 public class QPSFailException extends Exception implements CodeException {
 
+    private final boolean system;
+
     public QPSFailException() {
-        super(CommonResultCode.limitedAccess.getMessage());
+        this(false, CommonResultCode.limitedAccess.getMessage());
     }
 
-    public QPSFailException(String message) {
+    public QPSFailException(boolean system) {
+        this(system, system ? CommonResultCode.systemAccess.getMessage() : CommonResultCode.limitedAccess.getMessage());
+    }
+
+    public QPSFailException(boolean system, String message) {
         super(message);
+        this.system = system;
     }
 
 
     @Override
     public int getCode() {
-        return CommonResultCode.limitedAccess.getCode();
+        return system ? CommonResultCode.systemAccess.getCode() : CommonResultCode.limitedAccess.getCode();
     }
 
 }

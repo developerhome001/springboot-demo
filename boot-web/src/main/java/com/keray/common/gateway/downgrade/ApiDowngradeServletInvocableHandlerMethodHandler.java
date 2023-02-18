@@ -96,6 +96,7 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
 
     /**
      * 顺序应该在apilog之后  Exception之前
+     * 这里设置在QPS限制之前没问题，因为系统限制时还需要降级处理
      *
      * @return
      */
@@ -138,6 +139,9 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
         var code = fail.getCode();
         // 如果忽略降级这个错误的code  直接返回
         for (var i : ani.ignoreCodes()) if (code == i) return result;
+        // 用户使用QPS限制时不降级  404资源未找到时不降级  超时任何情况下都降级
+        if (code == CommonResultCode.notFund.getCode() ||
+                code == CommonResultCode.limitedAccess.getCode()) return result;
         return returnData(ani, fail, request, args, handlerMethod);
     }
 

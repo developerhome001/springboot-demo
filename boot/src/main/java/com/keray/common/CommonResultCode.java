@@ -13,16 +13,28 @@ public enum CommonResultCode implements ResultCode {
     settingError(2, "后端指定异常，前端直接提示"),
     ok(Integer.parseInt(System.getProperty(SystemProperty.RESULT_OK_CODE, "1")), "OK"),
     /**
+     * 用户使用型QPS限制错误码
+     */
+    limitedAccess(20, "您的访问过于频繁，请稍后再试"),
+    /**
+     * 系统稳定性流控限制错误码
+     */
+    systemAccess(21, "系统繁忙，请稍后再试"),
+    /**
      * 超时降级成功  接口降级使用  前端可以处理为成功
      */
     timeoutOk(25, "OK"),
+
+    /**
+     * 404错误
+     */
+    notFund(404, "资源未找到"),
     /**
      * 接口异常降级成功
      */
     subOk(26, "OK"),
     illegalArgument(10001, "数据输入错误，请重新输入"),
     dataChangeError(10002, "数据提交失败，请重新输入"),
-    limitedAccess(10003, "您的访问过于频繁，请稍后再试"),
     argumentNotPresent(10004, "数据输入错误，请重新输入"),
     dataNotAllowDelete(10005, "删除失败，请检查数据"),
     ;

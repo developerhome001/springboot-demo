@@ -1,5 +1,6 @@
 package com.keray.common.annotation;
 
+import com.keray.common.gateway.limit.RateLimitType;
 import com.keray.common.gateway.limit.RateLimiterApiTarget;
 import com.keray.common.qps.RejectStrategy;
 import com.keray.common.qps.spring.RateLimiterBean;
@@ -85,6 +86,13 @@ public @interface RateLimiterApi {
      * @return
      */
     int waitSpeed() default 50;
+
+    /**
+     * 流控限制类型
+     *
+     * @return
+     */
+    RateLimitType limitType() default RateLimitType.use;
 
     /**
      * 默认的令牌桶

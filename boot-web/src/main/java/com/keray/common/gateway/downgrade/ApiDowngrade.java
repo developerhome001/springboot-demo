@@ -13,10 +13,9 @@ public @interface ApiDowngrade {
     /**
      * 接口降级忽略的codes
      * 默认情况接口降级忽略QPS控制异常的接口
-     *
      * @return
      */
-    int[] ignoreCodes() default {10003};
+    int[] ignoreCodes() default {};
 
     /**
      * 接口降级标识 在调用handler时使用

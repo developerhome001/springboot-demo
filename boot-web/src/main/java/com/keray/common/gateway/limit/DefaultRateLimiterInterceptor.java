@@ -26,8 +26,9 @@ public class DefaultRateLimiterInterceptor extends AbstractRateLimiterIntercepto
                 rateLimiter.acquire(uuid, data.namespace(), data.maxRate(), 1, data.millisecond(), data.appointCron(), data.recoveryCount(),
                         data.rejectStrategy(), data.waitTime(), data.waitSpeed());
             } catch (QPSFailException e) {
-                if (StrUtil.isNotBlank(data.rejectMessage())) throw new QPSFailException(data.rejectMessage());
-                throw e;
+                if (StrUtil.isNotBlank(data.rejectMessage()))
+                    throw new QPSFailException(data.limitType() == RateLimitType.system, data.rejectMessage());
+                throw new QPSFailException(data.limitType() == RateLimitType.system);
             }
         }
     }
