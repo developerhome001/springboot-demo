@@ -126,8 +126,15 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
             if (result instanceof Result.SuccessResult<?> sr) {
                 return Result.fail(sr.getData(), CommonResultCode.timeoutOk.getCode(), CommonResultCode.timeoutOk.getMessage(), null);
             }
-            // 超时了本来就是异常  超时了就不需要获取配置的降级数据  保留原先的message 和code
-            result.setMessage(String.format("接口超时降级 code=%s msg=%s", result.getCode(), result.getMessage()));
+            var fail = (Result.FailResult) result;
+            // 如果是中断异常 原因是超时后原执行线程被中断  中断执行点在
+            // requestTimeout函数执行
+            if (fail.getError() instanceof InterruptedException) {
+                result.setMessage("接口执行超时被中断");
+            } else {
+                // 超时了本来就是异常  超时了就不需要获取配置的降级数据  保留原先的message 和code
+                result.setMessage(String.format("接口超时降级 code=%s msg=%s", result.getCode(), result.getMessage()));
+            }
             // 设置为timeoutOk 使得com.keray.common.keray.KerayServletInvocableHandlerMethod.invokeAndHandle方法不在对返回值处理
             // 因为超时后socket已经返回数据并关闭了
             result.setCode(CommonResultCode.timeoutOk.getCode());
@@ -183,6 +190,10 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
                     log.error("接口降级失败", ex);
                 }
             } finally {
+                // 必须在finally执行中断，保证前面的socket已经写入完成
+                // 在写入之前中断会导致原线程直接异常直接完毕，导致原先的流程走到socket写入流程
+                // 如果原执行流程比上面的socket先写入会导致结果不准确，如果同时写入会导致异常
+                // 所以必须要保证上面的socket写入完成后执行原流程中断
                 node.thread.interrupt();
             }
         }

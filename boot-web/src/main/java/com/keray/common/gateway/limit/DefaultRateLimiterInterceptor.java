@@ -24,12 +24,20 @@ public class DefaultRateLimiterInterceptor extends AbstractRateLimiterIntercepto
         if (StrUtil.isNotEmpty(uuid)) {
             try {
                 rateLimiter.acquire(uuid, data.namespace(), data.maxRate(), 1, data.millisecond(), data.appointCron(), data.recoveryCount(),
-                        data.rejectStrategy(), data.waitTime(), data.waitSpeed());
+                        data.rejectStrategy(), data.waitTime(), data.waitSpeed(), data.needRelease());
             } catch (QPSFailException e) {
                 if (StrUtil.isNotBlank(data.rejectMessage()))
                     throw new QPSFailException(data.limitType() == RateLimitType.system, data.rejectMessage());
                 throw new QPSFailException(data.limitType() == RateLimitType.system);
             }
+        }
+    }
+
+    @Override
+    public void release(RateLimiterApi data, HttpServletRequest request, HandlerMethod handler) throws InterruptedException {
+        var uuid = annDataGetKey(data);
+        if (StrUtil.isNotEmpty(uuid)) {
+            rateLimiter.release(uuid, data.namespace(), data.maxRate(), data.releaseCnt());
         }
     }
 }

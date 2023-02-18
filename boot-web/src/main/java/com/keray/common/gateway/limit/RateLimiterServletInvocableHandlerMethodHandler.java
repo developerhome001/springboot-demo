@@ -52,7 +52,14 @@ public class RateLimiterServletInvocableHandlerMethodHandler implements ServletI
         }
         var data = handlerMethod.getMethodAnnotation(RateLimiterApi.class);
         exec(data, req, handlerMethod);
-        return callback.get();
+        try {
+            return callback.get();
+        } finally {
+            // 释放令牌
+            if (data != null && data.needRelease()) {
+                rateLimiterInterceptor.release(data, req, handlerMethod);
+            }
+        }
     }
 
 
@@ -67,5 +74,6 @@ public class RateLimiterServletInvocableHandlerMethodHandler implements ServletI
             throw failException;
         }
     }
+
 
 }

@@ -88,6 +88,21 @@ public @interface RateLimiterApi {
     int waitSpeed() default 50;
 
     /**
+     * 令牌是否是释放型令牌
+     * 释放型令牌不会自动产生新令牌 只能释放  类似信号量
+     *
+     * @return
+     */
+    boolean needRelease() default false;
+
+    /**
+     * 释放型令牌时每次释放的令牌数量
+     *
+     * @return
+     */
+    int releaseCnt() default 1;
+
+    /**
      * 流控限制类型
      *
      * @return
