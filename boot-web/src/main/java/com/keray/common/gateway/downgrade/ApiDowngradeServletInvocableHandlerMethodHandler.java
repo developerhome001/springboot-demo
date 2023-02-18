@@ -1,6 +1,8 @@
 package com.keray.common.gateway.downgrade;
 
 import com.keray.common.CommonResultCode;
+import com.keray.common.IContext;
+import com.keray.common.IUserContext;
 import com.keray.common.Result;
 import com.keray.common.exception.BizRuntimeException;
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
@@ -34,6 +36,9 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
 
     @Resource
     private ApiDowngradeRegister apiDowngradeRegister;
+
+    @Resource
+    private IContext context;
 
     private static final AtomicInteger COUNT = new AtomicInteger(0);
 
@@ -111,6 +116,7 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
         node.ani = ani;
         node.request = request;
         node.thread = Thread.currentThread();
+        node.context = context.export();
         put(node);
         Result result = (Result) callback.get();
         node.finish = true;
@@ -149,6 +155,7 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
         var handler = node.handlerMethod;
         if (handler instanceof KerayServletInvocableHandlerMethod kerayServletInvocableHandlerMethod) {
             try {
+                context.importConf(node.context);
                 // 读取降级的数据
                 var returnData = returnData(node.ani, Result.fail(CommonResultCode.timeoutOk), node.request, node.args, node.handlerMethod);
                 returnData.setCode(CommonResultCode.timeoutOk.getCode());
@@ -271,5 +278,10 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
          * 请求是否完成
          */
         private volatile boolean finish;
+
+        /**
+         * 线程上下文
+         */
+        private Map<String, Object> context;
     }
 }
