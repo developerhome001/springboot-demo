@@ -1,8 +1,7 @@
 package com.keray.common.keray.factory;
 
-import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
+import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import com.keray.common.keray.KerayServletInvocableHandlerMethod;
-import com.keray.common.keray.factory.ServletInvocableHandlerMethodFactory;
 import com.keray.common.resolver.KerayHandlerMethodArgumentResolverConfig;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -24,7 +23,7 @@ public class DefaultServletInvocableHandlerMethodFactory implements ServletInvoc
 
 
     @Override
-    public ServletInvocableHandlerMethod create(HandlerMethod handlerMethod, ServletInvocableHandlerMethodHandler[] handlers) {
+    public ServletInvocableHandlerMethod create(HandlerMethod handlerMethod, ServletInvocableHandlerPipeline[] handlers) {
         return new KerayServletInvocableHandlerMethod(handlerMethod, handlers, kerayHandlerMethodArgumentResolverConfig);
     }
 }

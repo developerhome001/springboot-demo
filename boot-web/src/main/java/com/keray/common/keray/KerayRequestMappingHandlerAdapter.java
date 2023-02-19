@@ -1,6 +1,6 @@
 package com.keray.common.keray;
 
-import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
+import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import com.keray.common.keray.factory.ServletInvocableHandlerMethodFactory;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
@@ -14,11 +14,11 @@ public class KerayRequestMappingHandlerAdapter extends RequestMappingHandlerAdap
 
     private final ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory;
 
-    private final List<ServletInvocableHandlerMethodHandler> handlers;
+    private final List<ServletInvocableHandlerPipeline> handlers;
 
-    private volatile ServletInvocableHandlerMethodHandler[] cache = null;
+    private volatile ServletInvocableHandlerPipeline[] cache = null;
 
-    public KerayRequestMappingHandlerAdapter(ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory, List<ServletInvocableHandlerMethodHandler> handlers) {
+    public KerayRequestMappingHandlerAdapter(ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory, List<ServletInvocableHandlerPipeline> handlers) {
         this.servletInvocableHandlerMethodFactory = servletInvocableHandlerMethodFactory;
         this.handlers = handlers;
     }
@@ -31,8 +31,8 @@ public class KerayRequestMappingHandlerAdapter extends RequestMappingHandlerAdap
     @Override
     protected ServletInvocableHandlerMethod createInvocableHandlerMethod(HandlerMethod handlerMethod) {
         if (cache == null) {
-            handlers.sort(Comparator.comparing(ServletInvocableHandlerMethodHandler::getOrder));
-            cache = handlers.toArray(new ServletInvocableHandlerMethodHandler[0]);
+            handlers.sort(Comparator.comparing(ServletInvocableHandlerPipeline::getOrder));
+            cache = handlers.toArray(new ServletInvocableHandlerPipeline[0]);
         }
         return servletInvocableHandlerMethodFactory.create(handlerMethod, cache);
     }

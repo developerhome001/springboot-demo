@@ -1,8 +1,9 @@
 package com.keray.common.apitime;
 
 import com.keray.common.annotation.ApiTimeRecord;
+import com.keray.common.gateway.records.RecordsServletInvocableHandlerPipeline;
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
-import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
+import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import com.keray.common.threadpool.SysThreadPool;
 import com.keray.common.utils.CommonUtil;
 import com.keray.common.utils.TimeUtil;
@@ -22,9 +23,11 @@ import java.util.Map;
  * @author by keray
  * date:2019/12/4 2:21 PM
  * 记录api接口调用时长
+ * 建议使用{@link RecordsServletInvocableHandlerPipeline}
  */
 @Slf4j
-public class ApiTimeInterceptor implements ServletInvocableHandlerMethodHandler {
+@Deprecated
+public class ApiTimeInterceptor implements ServletInvocableHandlerPipeline {
 
     @Resource
     private ApiTimeRecordDb apiTimeRecordDao;

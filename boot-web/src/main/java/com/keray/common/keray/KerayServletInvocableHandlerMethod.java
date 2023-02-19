@@ -2,8 +2,8 @@ package com.keray.common.keray;
 
 import com.keray.common.CommonResultCode;
 import com.keray.common.Result;
-import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
-import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
+import com.keray.common.handler.ServletInvocableHandlerPipeline;
+import com.keray.common.handler.ServletInvocableHandlerPipelineChina;
 import com.keray.common.resolver.KerayHandlerMethodArgumentResolverConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.DefaultParameterNameDiscoverer;
@@ -29,8 +29,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 每一个请求都会独立生成一个实例
@@ -38,11 +36,12 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author by keray
  * date:2020/4/19 1:01 上午
  */
-@Slf4j(topic = "api-error")
-public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerMethod {
+@Slf4j(topic = "api-keray")
+public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerMethod implements ServletInvocableHandlerPipelineChina {
 
-    private final ServletInvocableHandlerMethodHandler[] handlers;
+    private final ServletInvocableHandlerPipeline[] pipelines;
 
+    private int pipelineIndex;
 
     private static final Object[] EMPTY_ARGS = new Object[0];
 
@@ -66,24 +65,10 @@ public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerM
     private ModelAndViewContainer mavContainer;
 
 
-    public KerayServletInvocableHandlerMethod(HandlerMethod handlerMethod, ServletInvocableHandlerMethodHandler[] handlers, KerayHandlerMethodArgumentResolverConfig resolvers) {
+    public KerayServletInvocableHandlerMethod(HandlerMethod handlerMethod, ServletInvocableHandlerPipeline[] pipelines, KerayHandlerMethodArgumentResolverConfig resolvers) {
         super(handlerMethod);
-        this.handlers = handlers;
+        this.pipelines = pipelines;
         this.resolvers = resolvers;
-    }
-
-    public void setDataBinderFactory(WebDataBinderFactory dataBinderFactory) {
-        this.dataBinderFactory = dataBinderFactory;
-    }
-
-
-    @Override
-    public void setParameterNameDiscoverer(ParameterNameDiscoverer parameterNameDiscoverer) {
-        this.parameterNameDiscoverer = parameterNameDiscoverer;
-    }
-
-    public void setHandlerMethodReturnValueHandlers(HandlerMethodReturnValueHandlerComposite returnValueHandlers) {
-        this.returnValueHandlers = returnValueHandlers;
     }
 
     /**
@@ -101,62 +86,32 @@ public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerM
         breakpointReturn(returnValue);
     }
 
-    public void breakpointReturn(Object returnValue) throws Exception {
-
-        setResponseStatus(webRequest);
-
-        if (returnValue == null) {
-            if (isRequestNotModified(webRequest) || getResponseStatus() != null || mavContainer.isRequestHandled()) {
-                disableContentCachingIfNecessary(webRequest);
-                mavContainer.setRequestHandled(true);
-                return;
-            }
-        } else if (StringUtils.hasText(getResponseStatusReason())) {
-            mavContainer.setRequestHandled(true);
-            return;
-        }
-
-        mavContainer.setRequestHandled(false);
-        Assert.state(this.returnValueHandlers != null, "No return value handlers");
-        try {
-            this.returnValueHandlers.handleReturnValue(
-                    returnValue, getReturnValueType(returnValue), mavContainer, webRequest);
-        } catch (Exception ex) {
-            if (logger.isTraceEnabled()) {
-                logger.trace(formatErrorForReturnValue(returnValue), ex);
-            }
-            throw ex;
-        }
-    }
 
     @Override
     public Object invokeForRequest(NativeWebRequest request, ModelAndViewContainer mavContainer, Object... providedArgs) throws Exception {
         Map<Object, Object> context = new HashMap<>();
         try {
             Object[] args = getMethodArgumentValues(context, request, mavContainer, providedArgs);
-            return work(args, request, context, () -> doInvoke(args));
+            return pipelines[pipelineIndex++].work(this, args, request, context, this);
         } finally {
             context.clear();
         }
     }
 
-    protected Object work(Object[] args, NativeWebRequest request, Map<Object, Object> context, ServletInvocableHandlerMethodCallback call) throws Exception {
-        if (handlers != null) {
-            final AtomicInteger index = new AtomicInteger(0);
-            AtomicReference<ServletInvocableHandlerMethodCallback> callback1 = new AtomicReference<>(null);
-            ServletInvocableHandlerMethodCallback callback = () -> {
-                index.getAndIncrement();
-                if (index.get() == handlers.length) {
-                    return call.get();
-                }
-                return handlers[index.get()].work(this, args, request, context, callback1.get());
-            };
-            callback1.set(callback);
-            return handlers[index.get()].work(this, args, request, context, callback);
-        } else {
-            return call.get();
-        }
+
+    @Override
+    public int nowPipelineIndex() {
+        return pipelineIndex;
     }
+
+    @Override
+    public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext) throws Exception {
+        if (pipelineIndex == pipelines.length) return doInvoke(args);
+        return pipelines[pipelineIndex++].work(this, args, request, workContext, this);
+    }
+
+
+    //**************************************下面参考父类代码的改写************************************************//
 
     protected Object[] getMethodArgumentValues(Map<Object, Object> threadLocal, NativeWebRequest request, ModelAndViewContainer mavContainer, Object... providedArgs) throws Exception {
 
@@ -186,6 +141,50 @@ public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerM
             }
         }
         return args;
+    }
+
+
+    public void breakpointReturn(Object returnValue) throws Exception {
+
+        setResponseStatus(webRequest);
+
+        if (returnValue == null) {
+            if (isRequestNotModified(webRequest) || getResponseStatus() != null || mavContainer.isRequestHandled()) {
+                disableContentCachingIfNecessary(webRequest);
+                mavContainer.setRequestHandled(true);
+                return;
+            }
+        } else if (StringUtils.hasText(getResponseStatusReason())) {
+            mavContainer.setRequestHandled(true);
+            return;
+        }
+
+        mavContainer.setRequestHandled(false);
+        Assert.state(this.returnValueHandlers != null, "No return value handlers");
+        try {
+            this.returnValueHandlers.handleReturnValue(
+                    returnValue, getReturnValueType(returnValue), mavContainer, webRequest);
+        } catch (Exception ex) {
+            if (logger.isTraceEnabled()) {
+                logger.trace(formatErrorForReturnValue(returnValue), ex);
+            }
+            throw ex;
+        }
+    }
+    //**************************************下面都是照抄父类代码************************************************//
+
+    public void setDataBinderFactory(WebDataBinderFactory dataBinderFactory) {
+        this.dataBinderFactory = dataBinderFactory;
+    }
+
+
+    @Override
+    public void setParameterNameDiscoverer(ParameterNameDiscoverer parameterNameDiscoverer) {
+        this.parameterNameDiscoverer = parameterNameDiscoverer;
+    }
+
+    public void setHandlerMethodReturnValueHandlers(HandlerMethodReturnValueHandlerComposite returnValueHandlers) {
+        this.returnValueHandlers = returnValueHandlers;
     }
 
 
@@ -229,4 +228,7 @@ public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerM
                 (returnValue != null ? ", type=" + returnValue.getClass().getName() : "") +
                 " in " + toString();
     }
+
+
 }
+

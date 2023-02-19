@@ -6,7 +6,7 @@ import com.keray.common.IUserContext;
 import com.keray.common.Result;
 import com.keray.common.exception.BizRuntimeException;
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
-import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
+import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import com.keray.common.keray.KerayServletInvocableHandlerMethod;
 import com.keray.common.threadpool.MemorySafeLinkedBlockingQueue;
 import com.keray.common.threadpool.SysThreadPool;
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Configuration
 @Slf4j
-public class ApiDowngradeServletInvocableHandlerMethodHandler implements ServletInvocableHandlerMethodHandler {
+public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvocableHandlerPipeline {
 
     @Resource
     private ApiDowngradeRegister apiDowngradeRegister;
@@ -67,7 +67,7 @@ public class ApiDowngradeServletInvocableHandlerMethodHandler implements Servlet
     private final Object clock = new Object();
 
 
-    public ApiDowngradeServletInvocableHandlerMethodHandler() {
+    public ApiDowngradeServletInvocableHandlerPipeline() {
         // 已经超时
         Runnable run = () -> {
             while (!Thread.currentThread().isInterrupted()) {

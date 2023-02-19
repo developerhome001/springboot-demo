@@ -5,7 +5,7 @@ import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.annotation.RateLimiterGroup;
 import com.keray.common.exception.QPSFailException;
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
-import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
+import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Configuration;
@@ -21,13 +21,13 @@ import java.util.Map;
 @Configuration
 @ConditionalOnBean(RateLimiterInterceptor.class)
 @Slf4j
-public class RateLimiterServletInvocableHandlerMethodHandler implements ServletInvocableHandlerMethodHandler {
+public class RateLimiterServletInvocableHandlerPipeline implements ServletInvocableHandlerPipeline {
 
     private final RateLimiterInterceptor rateLimiterInterceptor;
 
     private final IUserContext<?> userContext;
 
-    public RateLimiterServletInvocableHandlerMethodHandler(RateLimiterInterceptor rateLimiterInterceptor, IUserContext<?> userContext) {
+    public RateLimiterServletInvocableHandlerPipeline(RateLimiterInterceptor rateLimiterInterceptor, IUserContext<?> userContext) {
         log.info("qps流控开启");
         this.rateLimiterInterceptor = rateLimiterInterceptor;
         this.userContext = userContext;

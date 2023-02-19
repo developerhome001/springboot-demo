@@ -18,7 +18,7 @@ import java.util.Map;
  */
 @Slf4j
 @Configuration
-public class ExceptionServletInvocableHandlerMethodHandler<E extends Throwable> implements ServletInvocableHandlerMethodHandler, ExceptionHandler<E>, BeanPostProcessor {
+public class ExceptionServletInvocableHandlerPipeline<E extends Throwable> implements ServletInvocableHandlerPipeline, ExceptionHandler<E>, BeanPostProcessor {
 
     private final static ExceptionHandler<Throwable>[] EXCEPTION_HANDLERS = new ExceptionHandler[]{
             new IllegalArgumentExceptionHandler(),
@@ -79,7 +79,7 @@ public class ExceptionServletInvocableHandlerMethodHandler<E extends Throwable> 
 
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-        if (bean instanceof ExceptionHandler ch && !(ch instanceof ExceptionServletInvocableHandlerMethodHandler)) {
+        if (bean instanceof ExceptionHandler ch && !(ch instanceof ExceptionServletInvocableHandlerPipeline)) {
             CONSUMER_HANDLER.add(ch);
         }
         return BeanPostProcessor.super.postProcessBeforeInitialization(bean, beanName);

@@ -17,7 +17,7 @@ import java.util.Map;
  */
 @Slf4j
 @Configuration
-public class ResultServletInvocableHandlerMethodHandler implements ServletInvocableHandlerMethodHandler {
+public class ResultServletInvocableHandlerPipeline implements ServletInvocableHandlerPipeline {
 
     @Override
     public int getOrder() {

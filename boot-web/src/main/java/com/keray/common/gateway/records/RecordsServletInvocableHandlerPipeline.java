@@ -1,7 +1,7 @@
 package com.keray.common.gateway.records;
 
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
-import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
+import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import com.keray.common.threadpool.SysThreadPool;
 import com.keray.common.util.HttpContextUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +21,11 @@ import java.util.*;
 @Slf4j
 @Configuration
 @ConditionalOnBean(GatewayRecords.class)
-public class RecordsServletInvocableHandlerMethodHandler implements ServletInvocableHandlerMethodHandler {
+public class RecordsServletInvocableHandlerPipeline implements ServletInvocableHandlerPipeline {
 
     private final GatewayRecords gatewayRecords;
 
-    public RecordsServletInvocableHandlerMethodHandler(GatewayRecords gatewayRecords) {
+    public RecordsServletInvocableHandlerPipeline(GatewayRecords gatewayRecords) {
         log.info("添加接口记录器");
         this.gatewayRecords = gatewayRecords;
     }

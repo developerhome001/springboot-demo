@@ -1,6 +1,6 @@
 package com.keray.common.keray.factory;
 
-import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
+import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod;
 
@@ -11,5 +11,5 @@ import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHan
  * 默认实现 {@link DefaultServletInvocableHandlerMethodFactory}
  */
 public interface ServletInvocableHandlerMethodFactory {
-    ServletInvocableHandlerMethod create(HandlerMethod handlerMethod, ServletInvocableHandlerMethodHandler[] handlers);
+    ServletInvocableHandlerMethod create(HandlerMethod handlerMethod, ServletInvocableHandlerPipeline[] handlers);
 }

@@ -35,7 +35,7 @@ import java.util.function.Consumer;
 @Slf4j
 @Configuration
 @ConfigurationProperties(prefix = "keray.api.log")
-public class ApiLogServletInvocableHandlerMethodHandler implements ServletInvocableHandlerMethodHandler {
+public class ApiLogServletInvocableHandlerPipeline implements ServletInvocableHandlerPipeline {
 
     @Resource(name = "kObjectMapper")
     private ObjectMapper objectMapper;

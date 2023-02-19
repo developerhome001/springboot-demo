@@ -1,6 +1,6 @@
 package com.keray.common.keray;
 
-import com.keray.common.handler.ServletInvocableHandlerMethodHandler;
+import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import com.keray.common.keray.factory.ServletInvocableHandlerMethodFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -20,20 +20,20 @@ import java.util.List;
 public class KerayWebMvcRegistrations implements WebMvcRegistrations, BeanPostProcessor {
 
 
-    private final List<ServletInvocableHandlerMethodHandler> handlers = Collections.synchronizedList(new ArrayList<>(8));
+    private final List<ServletInvocableHandlerPipeline> handlers = Collections.synchronizedList(new ArrayList<>(8));
 
     @Resource
     private ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory;
 
 
     public KerayWebMvcRegistrations(ApplicationContext context) {
-        handlers.addAll(context.getBeansOfType(ServletInvocableHandlerMethodHandler.class).values());
+        handlers.addAll(context.getBeansOfType(ServletInvocableHandlerPipeline.class).values());
     }
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if (ServletInvocableHandlerMethodHandler.class.isAssignableFrom(bean.getClass())) {
-            handlers.add((ServletInvocableHandlerMethodHandler) bean);
+        if (ServletInvocableHandlerPipeline.class.isAssignableFrom(bean.getClass())) {
+            handlers.add((ServletInvocableHandlerPipeline) bean);
         }
         return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);
     }
