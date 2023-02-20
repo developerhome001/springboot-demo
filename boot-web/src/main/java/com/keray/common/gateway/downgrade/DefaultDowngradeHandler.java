@@ -23,6 +23,7 @@ public class DefaultDowngradeHandler implements DefDowngradeHandler {
     public Object handler(ApiDowngrade annotation, Result result, NativeWebRequest request, Object[] args, HandlerMethod handlerMethod) {
         var json = annotation.json();
         if (!json.isEmpty()) {
+            if (json.endsWith("\r") || json.endsWith("\n")) json = json.substring(0, json.length() - 1);
             // 如果json是{} []这种才json.parse 否则直接返回
             if (json.startsWith("{") && json.endsWith("}") ||
                     json.startsWith("[") && json.endsWith("]")) {
