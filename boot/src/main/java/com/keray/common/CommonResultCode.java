@@ -24,15 +24,15 @@ public enum CommonResultCode implements ResultCode {
      * 超时降级成功  接口降级使用  前端可以处理为成功
      */
     timeoutOk(25, "OK"),
+    /**
+     * 接口异常降级成功
+     */
+    subOk(26, "OK"),
 
     /**
      * 404错误
      */
     notFund(404, "资源未找到"),
-    /**
-     * 接口异常降级成功
-     */
-    subOk(26, "OK"),
     illegalArgument(10001, "数据输入错误，请重新输入"),
     dataChangeError(10002, "数据提交失败，请重新输入"),
     argumentNotPresent(10004, "数据输入错误，请重新输入"),
