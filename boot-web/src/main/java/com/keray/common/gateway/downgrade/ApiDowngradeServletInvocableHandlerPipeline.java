@@ -165,13 +165,11 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
             // requestTimeout函数执行
             if (fail.getError() instanceof InterruptedException) {
                 result.setMessage("接口执行超时被中断");
-            } else {
-                // 超时了本来就是异常  超时了就不需要获取配置的降级数据  保留原先的message 和code
-                result.setMessage(String.format("接口超时降级 code=%s msg=%s", result.getCode(), result.getMessage()));
             }
             // 设置为timeoutOk 使得com.keray.common.keray.KerayServletInvocableHandlerMethod.invokeAndHandle方法不在对返回值处理
             // 因为超时后socket已经返回数据并关闭了
             result.setCode(CommonResultCode.timeoutOk.getCode());
+            result.setApiDown(true);
             return result;
         }
         // 如果接口时成功的不处理降级
@@ -248,15 +246,20 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
             // 设置为fail为了日志记录  code设置为成功为了前端无感知
             if (resultObject instanceof Result.SuccessResult<?> sr) {
                 // 强制将result的code设置为降级成功的code
-                return Result.fail(sr.getData(),
+                var r = Result.fail(sr.getData(),
                         code,
                         fail.getMessage(),
                         fail.getError()
                 );
+                r.setApiDown(true);
+                return r;
             } else if (resultObject instanceof Result.FailResult<?, ?> fr) {
+                fr.setApiDown(true);
                 return fr;
             }
-            return Result.fail(resultObject, code, fail.getMessage(), fail.getError());
+            var r = Result.fail(resultObject, code, fail.getMessage(), fail.getError());
+            r.setApiDown(true);
+            return r;
         } catch (Throwable throwable) {
             // 如果降级也处理失败  直接返回原对象
             log.error("接口降级处理失败", throwable);

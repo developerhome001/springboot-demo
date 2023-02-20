@@ -144,7 +144,7 @@ public class ApiLogServletInvocableHandlerPipeline implements ServletInvocableHa
             builder.append(parameters[i].getParameterName()).append("=").append(json).append(System.lineSeparator());
         }
         if (result instanceof Result.FailResult) {
-            builder.append("result:").append(StrUtil.format("code={},message={}", ((Result) result).getCode(), ((Result.FailResult) result).getMessage())).append(System.lineSeparator());
+            builder.append("result:").append(StrUtil.format("接口降级={},code={},message={}", ((Result.FailResult<?, ?>) result).isApiDown(), ((Result) result).getCode(), ((Result.FailResult) result).getMessage())).append(System.lineSeparator());
         } else if (result instanceof Result.SuccessResult) {
             builder.append("result:").append(objectMapper.writeValueAsString(((Result.SuccessResult) result).getData())).append(System.lineSeparator());
         } else if (result == null) {

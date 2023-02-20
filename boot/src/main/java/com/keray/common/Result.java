@@ -18,7 +18,13 @@ public class Result<T> implements Serializable {
 
     private String message;
 
+    /**
+     * 接口是否降级
+     */
+    private boolean apiDown;
+
     protected Integer code;
+
 
     protected T data;
 
