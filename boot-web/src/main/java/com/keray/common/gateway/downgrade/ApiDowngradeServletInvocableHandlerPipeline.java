@@ -1,5 +1,6 @@
 package com.keray.common.gateway.downgrade;
 
+import cn.hutool.core.collection.CollUtil;
 import com.keray.common.CommonResultCode;
 import com.keray.common.IContext;
 import com.keray.common.IUserContext;
@@ -10,6 +11,8 @@ import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import com.keray.common.keray.KerayServletInvocableHandlerMethod;
 import com.keray.common.threadpool.MemorySafeLinkedBlockingQueue;
 import com.keray.common.threadpool.SysThreadPool;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
@@ -20,6 +23,8 @@ import org.springframework.web.method.HandlerMethod;
 import javax.annotation.Resource;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -33,6 +38,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Configuration
 @Slf4j
 public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvocableHandlerPipeline {
+
+    public final static String HOOKS_KEY = "ApiDowngradeHooks";
+    public final static String CONTEXT_NODE = "ContextNode";
 
     @Resource
     private ApiDowngradeRegister apiDowngradeRegister;
@@ -118,7 +126,10 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
         node.request = request;
         node.thread = Thread.currentThread();
         node.context = context.export();
+        node.workContext = workContext;
         put(node);
+        workContext.put(HOOKS_KEY, new LinkedList<>());
+        workContext.put(CONTEXT_NODE, node);
         Result result = (Result) callback.get();
         node.finish = true;
         if (node.timeout) {
@@ -194,6 +205,11 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
                 // 在写入之前中断会导致原线程直接异常直接完毕，导致原先的流程走到socket写入流程
                 // 如果原执行流程比上面的socket先写入会导致结果不准确，如果同时写入会导致异常
                 // 所以必须要保证上面的socket写入完成后执行原流程中断
+                // 中断原先的执行线程之前执行管道添加的勾子函数
+                var hooks = (List<Runnable>) node.workContext.get(HOOKS_KEY);
+                if (CollUtil.isNotEmpty(hooks)) {
+                    for (var hook : hooks) hook.run();
+                }
                 node.thread.interrupt();
             }
         }
@@ -262,7 +278,9 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
     /**
      * 监听对象
      */
-    private static class Node {
+    @Getter
+    @Setter
+    public static class Node {
         private final Object lock = new Object();
         private Node next;
 
@@ -298,5 +316,9 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
          * 线程上下文
          */
         private Map<String, Object> context;
+        /**
+         * 管道流上下文
+         */
+        private Map<Object, Object> workContext;
     }
 }

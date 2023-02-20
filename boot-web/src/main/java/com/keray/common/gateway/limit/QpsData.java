@@ -1,6 +1,7 @@
 package com.keray.common.gateway.limit;
 
 import cn.hutool.core.util.StrUtil;
+import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.qps.RejectStrategy;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,7 +22,7 @@ public class QpsData {
     private String namespace;
 
     // 严格qps限制   严格限制时使用redis分布式qps仓库 非严格模式使用单机qps限制
-    private boolean strict;
+    private String bean;
 
 
     /**
@@ -68,9 +69,39 @@ public class QpsData {
      */
     private int waitSpeed = 50;
 
-    public QpsData(Integer cnt, boolean strict) {
+
+    /**
+     * 释放型令牌每次释放量
+     */
+    private int releaseCnt = 1;
+
+    /**
+     * 是否为释放型令牌
+     */
+    private boolean needRelease;
+    private RateLimitType limitType;
+
+    public static QpsData of(RateLimiterApi rateLimiterApi) {
+        var data = new QpsData();
+        data.namespace = rateLimiterApi.namespace();
+        data.maxRate = rateLimiterApi.maxRate();
+        data.bean = rateLimiterApi.bean();
+        data.target = rateLimiterApi.target();
+        data.millisecond = rateLimiterApi.millisecond();
+        data.appointCron = rateLimiterApi.appointCron();
+        data.rejectMessage = rateLimiterApi.rejectMessage();
+        data.rejectStrategy = rateLimiterApi.rejectStrategy();
+        data.waitTime = rateLimiterApi.waitTime();
+        data.waitSpeed = rateLimiterApi.waitSpeed();
+        data.releaseCnt = rateLimiterApi.releaseCnt();
+        data.needRelease = rateLimiterApi.needRelease();
+        data.limitType = rateLimiterApi.limitType();
+        return data;
+    }
+
+    public QpsData(Integer cnt, String bean) {
         this.maxRate = cnt;
-        this.strict = strict;
+        this.bean = bean;
     }
 
     public QpsData(String namespace) {

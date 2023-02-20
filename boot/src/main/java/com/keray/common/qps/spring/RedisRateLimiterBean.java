@@ -16,7 +16,7 @@ public class RedisRateLimiterBean implements RateLimiterBean<RLock> {
     private final RateLimiterStore rateLimiterStore;
 
 
-    public RedisRateLimiterBean(RedissonLock redissonLock, RedisTemplate<String, String> redisTemplate) {
+    public RedisRateLimiterBean(RedissonLock redissonLock, RedisTemplate redisTemplate) {
         this.redissonLock = redissonLock;
         this.rateLimiterStore = new RedisRateLimiterStore(redisTemplate);
     }

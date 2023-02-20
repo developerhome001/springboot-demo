@@ -2,14 +2,29 @@ package com.keray.common.gateway.limit;
 
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.exception.QPSFailException;
+import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 public interface RateLimiterInterceptor {
+
     /**
-     * QPS拦截
+     * 自定义流控
+     *
+     * @param request
+     * @param handler
+     * @param releaseList 可释放型的流控需要再成功后需要添加勾子
+     * @return 自定义流控是否运行过
+     * @throws InterruptedException
+     * @throws QPSFailException
+     */
+    boolean interceptorConsumer(NativeWebRequest request, HandlerMethod handler, Map<String, QpsData> releaseList) throws InterruptedException, QPSFailException;
+
+    /**
+     * 注解QPS拦截
      *
      * @param data
      * @param request
@@ -17,15 +32,15 @@ public interface RateLimiterInterceptor {
      * @throws InterruptedException
      * @throws QPSFailException
      */
-    void interceptor(RateLimiterApi data, HttpServletRequest request, HandlerMethod handler) throws InterruptedException, QPSFailException;
+    void interceptor(RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, Map<String, QpsData> releaseList) throws InterruptedException, QPSFailException;
 
     /**
      * QPS执行完成后释放
      *
-     * @param data
+     * @param qpsData
      * @param request
      * @param handler
      * @throws InterruptedException
      */
-    void release(RateLimiterApi data, HttpServletRequest request, HandlerMethod handler) throws InterruptedException;
+    void release(String key, QpsData qpsData, NativeWebRequest request, HandlerMethod handler) throws InterruptedException;
 }

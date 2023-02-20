@@ -7,6 +7,7 @@ import com.keray.common.exception.QPSFailException;
 import com.keray.common.lock.DistributedLock;
 import com.keray.common.utils.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.client.RedisException;
 import org.springframework.scheduling.support.CronExpression;
 
 import java.time.LocalDateTime;
@@ -130,7 +131,10 @@ public class RateLimiter {
             }
         } finally {
             if (lock != null) {
-                distributedLock.unLock(lock);
+                try {
+                    distributedLock.unLock(lock);
+                } catch (Throwable ignore) {
+                }
             }
         }
     }
@@ -169,7 +173,10 @@ public class RateLimiter {
             store.setStoreData(uuid, rateDataTrans(lastTimestamp, maxRate != null ? Math.min(rateBalance, maxRate) : rateBalance));
         } finally {
             if (lock != null) {
-                distributedLock.unLock(lock);
+                try {
+                    distributedLock.unLock(lock);
+                } catch (Throwable ignore) {
+                }
             }
         }
     }

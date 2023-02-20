@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 每一个请求都会独立生成一个实例
@@ -89,7 +90,7 @@ public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerM
 
     @Override
     public Object invokeForRequest(NativeWebRequest request, ModelAndViewContainer mavContainer, Object... providedArgs) throws Exception {
-        Map<Object, Object> context = new HashMap<>();
+        Map<Object, Object> context = new ConcurrentHashMap<>();
         try {
             Object[] args = getMethodArgumentValues(context, request, mavContainer, providedArgs);
             return pipelines[pipelineIndex++].work(this, args, request, context, this);
