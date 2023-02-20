@@ -44,6 +44,7 @@ public class DefaultDowngradeHandler implements DefDowngradeHandler {
         if (Collection.class.isAssignableFrom(returnType)) return List.of();
         // map类型返回空map
         if (Map.class.isAssignableFrom(returnType)) return new LinkedHashMap<>();
+        if (Object.class == returnType) return null;
         // 其他类型返回空实例
         try {
             return returnType.getDeclaredConstructor().newInstance();

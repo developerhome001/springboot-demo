@@ -183,7 +183,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
         // 用户使用QPS限制时不降级  404资源未找到时不降级  超时任何情况下都降级
         if (code == CommonResultCode.notFund.getCode() ||
                 code == CommonResultCode.limitedAccess.getCode()) return result;
-        return returnData(ani, fail, request, args, handlerMethod);
+        return returnData(ani, fail, request, args, handlerMethod, CommonResultCode.subOk.getCode());
     }
 
     /**
@@ -202,13 +202,13 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
             try {
                 context.importConf(node.context);
                 // 读取降级的数据
-                var returnData = returnData(node.ani, Result.fail(CommonResultCode.timeoutOk), node.request, node.args, node.handlerMethod);
-                returnData.setCode(CommonResultCode.timeoutOk.getCode());
+                var returnData = returnData(node.ani, Result.fail(CommonResultCode.timeoutOk), node.request, node.args, node.handlerMethod, CommonResultCode.timeoutOk.getCode());
                 kerayServletInvocableHandlerMethod.breakpointReturn(returnData);
                 var res = node.request.getNativeResponse(ServletResponse.class);
                 // 直接关闭socket
                 if (res != null) res.getOutputStream().close();
             } catch (Exception e) {
+                log.error("接口降级失败", e);
                 try {
                     HttpServletResponse response = node.request.getNativeResponse(HttpServletResponse.class);
                     if (response == null) {
@@ -221,7 +221,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
                     response.getOutputStream().flush();
                     response.getOutputStream().close();
                 } catch (Exception ex) {
-                    log.error("接口降级失败", ex);
+                    log.error("接口降级失败1", ex);
                 }
             } finally {
                 // 必须在finally执行中断，保证前面的socket已经写入完成
@@ -238,7 +238,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
         }
     }
 
-    private Result.FailResult returnData(ApiDowngrade ani, Result.FailResult fail, NativeWebRequest request, Object[] args, HandlerMethod handlerMethod) {
+    private Result.FailResult returnData(ApiDowngrade ani, Result.FailResult fail, NativeWebRequest request, Object[] args, HandlerMethod handlerMethod, int code) {
         // 开始降级
         var clazz = ani.handler();
         var instance = apiDowngradeRegister.getRegister(clazz);
@@ -249,18 +249,14 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
             if (resultObject instanceof Result.SuccessResult<?> sr) {
                 // 强制将result的code设置为降级成功的code
                 return Result.fail(sr.getData(),
-                        CommonResultCode.subOk.getCode(),
+                        code,
                         fail.getMessage(),
                         fail.getError()
                 );
             } else if (resultObject instanceof Result.FailResult<?, ?> fr) {
-                return Result.fail(fr.getData(),
-                        CommonResultCode.subOk.getCode(),
-                        fr.getMessage(),
-                        fr.getError()
-                );
+                return fr;
             }
-            return Result.fail(resultObject, CommonResultCode.subOk.getCode(), fail.getMessage(), fail.getError());
+            return Result.fail(resultObject, code, fail.getMessage(), fail.getError());
         } catch (Throwable throwable) {
             // 如果降级也处理失败  直接返回原对象
             log.error("接口降级处理失败", throwable);
