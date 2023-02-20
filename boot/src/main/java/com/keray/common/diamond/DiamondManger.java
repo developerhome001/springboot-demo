@@ -9,11 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.util.ProxyUtils;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,8 +50,9 @@ public class DiamondManger implements BeanPostProcessor {
 
     @PostConstruct
     public void init() {
-        if (store != null && handler != null)
+        if (store != null && handler != null) {
             log.info("动态配置管理开启");
+        }
     }
 
     @SneakyThrows

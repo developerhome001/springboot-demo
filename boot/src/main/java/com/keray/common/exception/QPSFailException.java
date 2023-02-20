@@ -7,11 +7,15 @@ public class QPSFailException extends Exception implements CodeException {
     private final boolean system;
 
     public QPSFailException() {
-        this(false, CommonResultCode.limitedAccess.getMessage());
+        this(CommonResultCode.limitedAccess.getMessage());
     }
 
     public QPSFailException(boolean system) {
         this(system, system ? CommonResultCode.systemAccess.getMessage() : CommonResultCode.limitedAccess.getMessage());
+    }
+
+    public QPSFailException(String message) {
+        this(false, message);
     }
 
     public QPSFailException(boolean system, String message) {

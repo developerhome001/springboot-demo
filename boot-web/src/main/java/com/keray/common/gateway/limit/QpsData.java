@@ -21,14 +21,18 @@ public class QpsData {
      */
     private String namespace;
 
-    // 严格qps限制   严格限制时使用redis分布式qps仓库 非严格模式使用单机qps限制
-    private String bean;
+    /**
+     * 控制的beanname
+     */
+    private String bean = "redis";
 
 
     /**
      * ip范围限制时 确定是单个ip限制还是限制ip范围
      */
     private RateLimiterApiTarget target;
+
+    private int acquireCount = 1;
 
 
     /**
@@ -81,6 +85,7 @@ public class QpsData {
     private boolean needRelease;
     private RateLimitType limitType;
 
+
     public static QpsData of(RateLimiterApi rateLimiterApi) {
         var data = new QpsData();
         data.namespace = rateLimiterApi.namespace();
@@ -96,6 +101,24 @@ public class QpsData {
         data.releaseCnt = rateLimiterApi.releaseCnt();
         data.needRelease = rateLimiterApi.needRelease();
         data.limitType = rateLimiterApi.limitType();
+        return data;
+    }
+
+    public QpsData copy() {
+        var data = new QpsData();
+        data.namespace = this.namespace;
+        data.maxRate = this.maxRate;
+        data.bean = this.bean;
+        data.target = this.target;
+        data.millisecond = this.millisecond;
+        data.appointCron = this.appointCron;
+        data.rejectMessage = this.rejectMessage;
+        data.rejectStrategy = this.rejectStrategy;
+        data.waitTime = this.waitTime;
+        data.waitSpeed = this.waitSpeed;
+        data.releaseCnt = this.releaseCnt;
+        data.needRelease = this.needRelease;
+        data.limitType = this.limitType;
         return data;
     }
 

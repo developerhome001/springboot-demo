@@ -3,8 +3,16 @@ package com.keray.common.gateway.limit;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.keray.common.diamond.Diamond;
+import com.keray.common.lock.RedissonLock;
+import com.keray.common.qps.spring.MemoryRateLimiterBean;
+import com.keray.common.qps.spring.RateLimiterBean;
+import com.keray.common.qps.spring.RedisRateLimiterBean;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.HashMap;
 import java.util.LinkedList;

@@ -1,22 +1,19 @@
-package com.demo.qps;
+package com.keray.common.gateway.limit;
 
-import com.keray.common.config.KerayRedisConfig;
-import com.keray.common.gateway.limit.QpsConfig;
 import com.keray.common.lock.RedissonLock;
 import com.keray.common.qps.spring.MemoryRateLimiterBean;
 import com.keray.common.qps.spring.RateLimiterBean;
 import com.keray.common.qps.spring.RedisRateLimiterBean;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 
-@Configuration
-@AutoConfigureAfter(KerayRedisConfig.class)
-public class Config {
-
+@Configuration(proxyBeanMethods = false)
+public class RateLimiterBeanAutoConfig {
     @Bean
+    @ConditionalOnBean(name = "redisTemplate")
     public RateLimiterBean<?> redisRateLimiterBean(RedissonLock redissonLock, @Qualifier("redisTemplate") RedisTemplate<String, String> redisTemplate) {
         return new RedisRateLimiterBean(redissonLock, redisTemplate);
     }
@@ -25,11 +22,5 @@ public class Config {
     public RateLimiterBean<?> memoryRateLimiterBean() {
         return new MemoryRateLimiterBean();
     }
-
-    @Bean
-    public DefaultRateLimiterInterceptor rateLimiterInterceptor(QpsConfig qpsConfig) {
-        return new DefaultRateLimiterInterceptor(qpsConfig);
-    }
-
 
 }

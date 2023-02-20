@@ -27,7 +27,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHan
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,9 +39,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j(topic = "api-keray")
 public class KerayServletInvocableHandlerMethod extends ServletInvocableHandlerMethod implements ServletInvocableHandlerPipelineChina {
 
-    private final ServletInvocableHandlerPipeline[] pipelines;
+    protected final ServletInvocableHandlerPipeline[] pipelines;
 
-    private int pipelineIndex;
+    protected int pipelineIndex;
 
     private static final Object[] EMPTY_ARGS = new Object[0];
 

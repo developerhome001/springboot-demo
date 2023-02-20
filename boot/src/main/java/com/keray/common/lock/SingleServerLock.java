@@ -37,11 +37,12 @@ public class SingleServerLock implements DistributedLock<String> {
         if (data.computeIfAbsent(key, k -> threadCode) == threadCode) return key;
         // 加锁失败  开始轮训
         long now = System.currentTimeMillis();
-        for (; ; ) {
+        while (!Thread.currentThread().isInterrupted()) {
             long nowx = System.currentTimeMillis();
             if (nowx - now > timeout) throw new TimeoutException();
             if (data.computeIfAbsent(key, k -> threadCode) == threadCode) return key;
         }
+        throw new InterruptedException();
     }
 
     @Override

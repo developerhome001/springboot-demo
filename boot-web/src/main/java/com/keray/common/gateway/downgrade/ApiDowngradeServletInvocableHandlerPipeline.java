@@ -1,10 +1,7 @@
 package com.keray.common.gateway.downgrade;
 
 import cn.hutool.core.collection.CollUtil;
-import com.keray.common.CommonResultCode;
-import com.keray.common.IContext;
-import com.keray.common.IUserContext;
-import com.keray.common.Result;
+import com.keray.common.*;
 import com.keray.common.exception.BizRuntimeException;
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
 import com.keray.common.handler.ServletInvocableHandlerPipeline;
@@ -16,10 +13,14 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
@@ -44,6 +45,11 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
 
     @Resource
     private ApiDowngradeRegister apiDowngradeRegister;
+
+    @Resource
+    private ApplicationContext applicationContext;
+
+    private final List<ApiDowngradeHandler> apiDowngradeHandlers = new LinkedList<>();
 
     @Resource
     private IContext context;
@@ -74,6 +80,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
      */
     private final Object clock = new Object();
 
+    private final Thread backstageThread;
 
     public ApiDowngradeServletInvocableHandlerPipeline() {
         // 已经超时
@@ -99,7 +106,20 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
                 }
             }
         };
-        new Thread(run, "TIMEOUT_MONITOR_THREAD").start();
+        backstageThread = new Thread(run, "TIMEOUT_MONITOR_THREAD");
+        backstageThread.start();
+    }
+
+
+    @EventListener(ApplicationStartedEvent.class)
+    public void init() {
+        apiDowngradeHandlers.addAll(applicationContext.getBeansOfType(ApiDowngradeHandler.class).values());
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        backstageThread.interrupt();
+        threadPoolExecutor.shutdown();
     }
 
     /**
@@ -118,6 +138,9 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
         var ani = handlerMethod.getMethodAnnotation(ApiDowngrade.class);
         // 没有服务器降级的接口不处理
         if (ani == null) return callback.get();
+        for (var handler : apiDowngradeHandlers) {
+            if (!handler.handler(ani)) return callback.get();
+        }
         var node = new Node();
         node.time = System.currentTimeMillis();
         node.handlerMethod = handlerMethod;

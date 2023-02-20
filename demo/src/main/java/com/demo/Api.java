@@ -43,12 +43,11 @@ public class Api {
     public Object checkHealth(@RequestParam(defaultValue = "aaa") String a) throws Exception {
         var sleep = RandomUtil.randomInt(100, 1000);
 //        try {
-            Thread.sleep(20000);
+        Thread.sleep(20000);
 //        } catch (InterruptedException e) {
 //            throw new BizRuntimeException("线程中断了");
 //        }
 //        throw new BizRuntimeException("直接抛出异常");
         return 123;
     }
-
 }
