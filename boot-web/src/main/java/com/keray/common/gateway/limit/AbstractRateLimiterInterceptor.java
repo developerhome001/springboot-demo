@@ -44,12 +44,8 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
         var req = request.getNativeRequest(HttpServletRequest.class);
         if (req == null || "keray".equals(req.getHeader("keray"))) return false;
         var ip = userContext.currentIp();
-        // url的QPS控制
-        var urlData = getQpsConfig().getUrlData();
         var hadWork = false;
-        hadWork = urlQps(urlData, uriVal(urlData, req.getRequestURI(), false),
-                ip, req, handler, null, false);
-        // ip的QPS控制
+        //先对ip的QPS控制  如果非0.0.0.0/0ip  *型URL匹配上后 后面的流控不继续
         {
             var data = getQpsConfig().getData();
             Map<String, QpsData> ipData = null;
@@ -61,7 +57,18 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
                     break;
                 }
             }
-            clientWord(ipData, req.getRequestURI(), ip, ipKey, "IP_QPS", releaseList);
+            var flag = clientWord(ipData, req.getRequestURI(), ip, ipKey, "IP_QPS", releaseList);
+            // 不是通用ip匹配上的
+            if (!"0.0.0.0/0".equals(ipKey)) {
+                hadWork = flag;
+            }
+        }
+        if (!hadWork) {
+            // url的QPS控制
+            var urlData = getQpsConfig().getUrlData();
+            hadWork = urlQps(urlData, uriVal(urlData, req.getRequestURI(), false),
+                    ip, req, handler, null, false);
+
         }
         return hadWork;
     }
@@ -100,9 +107,9 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
      * @throws QPSFailException
      * @throws InterruptedException
      */
-    public void clientWord(Map<String, QpsData> clientData, String path, String key, String groupKey, String group, Map<String, QpsData> releaseList) throws QPSFailException, InterruptedException {
-        if (clientData == null) return;
-        // 判断客户端qps是否达到上限
+    public boolean clientWord(Map<String, QpsData> clientData, String path, String key, String groupKey, String group, Map<String, QpsData> releaseList) throws QPSFailException, InterruptedException {
+        if (clientData == null) return false;
+        // 通用接口QPS流控限制
         var value = clientData.get("*");
         if (value != null) {
             RateLimiterBean rateLimiter = this.getBean(value.getBean());
@@ -114,7 +121,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
                 if (value.isNeedRelease()) {
                     var cp = value.copy();
                     cp.setNamespace(value.getNamespace(group));
-                    releaseList.put(k, value);
+                    releaseList.put(k, cp);
                 }
             } catch (QPSFailException e) {
                 throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage());
@@ -141,12 +148,14 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
                 if (value.isNeedRelease()) {
                     var cp = value.copy();
                     cp.setNamespace(group + namespace);
-                    releaseList.put(k, value);
+                    releaseList.put(k, cp);
                 }
+                return true;
             } catch (QPSFailException e) {
                 throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage());
             }
         }
+        return false;
     }
 
 
@@ -188,6 +197,14 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
     }
 
 
+    /**
+     * 非空间名获取时只匹配已/开头的配置
+     * @param data
+     * @param key
+     * @param namespace
+     * @param <T>
+     * @return
+     */
     protected static <T> T uriVal(Map<String, T> data, String key, boolean namespace) {
         if (namespace) return data.get(key);
         var matcher = getMatcher(data);

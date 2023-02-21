@@ -86,7 +86,7 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
         } finally {
             // 释放令牌
             var node = (ApiDowngradeServletInvocableHandlerPipeline.Node) workContext.get(ApiDowngradeServletInvocableHandlerPipeline.CONTEXT_NODE);
-            if (!releaseData.isEmpty() && !node.isTimeout()) {
+            if (!releaseData.isEmpty() && (node == null || !node.isTimeout())) {
                 for (var d : releaseData.entrySet())
                     rateLimiterInterceptor.release(d.getKey(), d.getValue(), request, handlerMethod);
             }
