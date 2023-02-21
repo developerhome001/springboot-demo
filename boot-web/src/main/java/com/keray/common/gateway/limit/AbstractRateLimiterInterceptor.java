@@ -143,7 +143,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
             RateLimiterBean rateLimiter = this.getBean(value.getBean());
             var k = value.getTarget() == RateLimiterApiTarget.ip ? groupKey : key;
             try {
-                rateLimiter.acquire(k, group + namespace, value.getMaxRate(), 1, value.getMillisecond(), value.getAppointCron(),
+                rateLimiter.acquire(k, String.format("%s:%s", group, namespace), value.getMaxRate(), 1, value.getMillisecond(), value.getAppointCron(),
                         value.getRecoveryCount(), value.getRejectStrategy(), value.getWaitTime(), value.getWaitSpeed());
                 if (value.isNeedRelease()) {
                     var cp = value.copy();
@@ -199,6 +199,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
 
     /**
      * 非空间名获取时只匹配已/开头的配置
+     *
      * @param data
      * @param key
      * @param namespace
