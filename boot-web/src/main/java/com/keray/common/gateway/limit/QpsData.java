@@ -11,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class QpsData {
+    private String key;
     /**
      * 最大令牌数
      */
@@ -86,8 +87,9 @@ public class QpsData {
     private RateLimitType limitType;
 
 
-    public static QpsData of(RateLimiterApi rateLimiterApi) {
+    public static QpsData of(RateLimiterApi rateLimiterApi, String key) {
         var data = new QpsData();
+        data.key = key;
         data.namespace = rateLimiterApi.namespace();
         data.maxRate = rateLimiterApi.maxRate();
         data.bean = rateLimiterApi.bean();
@@ -104,8 +106,9 @@ public class QpsData {
         return data;
     }
 
-    public QpsData copy() {
+    public QpsData copy(String key) {
         var data = new QpsData();
+        data.key = key;
         data.namespace = this.namespace;
         data.maxRate = this.maxRate;
         data.bean = this.bean;

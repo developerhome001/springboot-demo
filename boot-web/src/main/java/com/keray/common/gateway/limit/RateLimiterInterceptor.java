@@ -7,6 +7,7 @@ import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Map;
 
 public interface RateLimiterInterceptor {
@@ -21,7 +22,7 @@ public interface RateLimiterInterceptor {
      * @throws InterruptedException
      * @throws QPSFailException
      */
-    boolean interceptorConsumer(NativeWebRequest request, HandlerMethod handler, Map<String, QpsData> releaseList) throws InterruptedException, QPSFailException;
+    boolean interceptorConsumer(NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws InterruptedException, QPSFailException;
 
     /**
      * 注解QPS拦截
@@ -32,7 +33,7 @@ public interface RateLimiterInterceptor {
      * @throws InterruptedException
      * @throws QPSFailException
      */
-    void interceptor(RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, Map<String, QpsData> releaseList) throws InterruptedException, QPSFailException;
+    void interceptor(RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws InterruptedException, QPSFailException;
 
     /**
      * QPS执行完成后释放

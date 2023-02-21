@@ -51,16 +51,16 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
 
     @Override
     public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
-        var releaseData = new LinkedHashMap<String, QpsData>();
+        var releaseData = new LinkedList<QpsData>();
         Runnable run = () -> {
             // 添加接口降级超时处理勾子
             // 如果是需要释放型的令牌，给超时处理管道添加勾子
             // 管道存在超时处理的勾子链条
             var hooks = (List<Runnable>) workContext.get(ApiDowngradeServletInvocableHandlerPipeline.HOOKS_KEY);
             if (hooks != null && !releaseData.isEmpty()) {
-                releaseData.forEach((k, v) -> hooks.add(() -> {
+                releaseData.forEach(v -> hooks.add(() -> {
                     try {
-                        rateLimiterInterceptor.release(k, v, request, handlerMethod);
+                        rateLimiterInterceptor.release(v.getKey(), v, request, handlerMethod);
                     } catch (InterruptedException e) {
                         log.error("超时令牌释放失败");
                     }
@@ -87,14 +87,14 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
             // 释放令牌
             var node = (ApiDowngradeServletInvocableHandlerPipeline.Node) workContext.get(ApiDowngradeServletInvocableHandlerPipeline.CONTEXT_NODE);
             if (!releaseData.isEmpty() && (node == null || !node.isTimeout())) {
-                for (var d : releaseData.entrySet())
-                    rateLimiterInterceptor.release(d.getKey(), d.getValue(), request, handlerMethod);
+                for (var d : releaseData)
+                    rateLimiterInterceptor.release(d.getKey(), d, request, handlerMethod);
             }
         }
     }
 
 
-    private void exec(RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, Map<String, QpsData> releaseList) throws Exception {
+    private void exec(RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws Exception {
         try {
             rateLimiterInterceptor.interceptor(data, request, handler, releaseList);
         } catch (QPSFailException failException) {

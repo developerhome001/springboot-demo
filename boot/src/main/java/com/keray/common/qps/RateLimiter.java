@@ -102,7 +102,8 @@ public class RateLimiter {
             var data = rateDataTrans(store.getStoreData(uuid));
             int rateBalance;
             long lastTimestamp;
-            long now = System.currentTimeMillis();
+            long now = 0;
+            if (!needRelease) now = System.currentTimeMillis();
             // 如果存储桶没有令牌数据 初始化令牌桶
             if (data == null) {
                 lastTimestamp = now;
@@ -165,7 +166,7 @@ public class RateLimiter {
             // 是否阶段如果data为null 唯一的可能就是使用redis存储释放间隔太长导致数据失效了
             // 如果失效了的话直接不处理  理论上不可能出现
             if (data == null) return;
-            var lastTimestamp = data[0];
+            var lastTimestamp = data[0] + 1;
             // 获取剩余令牌加上释放令牌数量
             var rateBalance = Math.toIntExact(data[1]) + releaseCnt;
             // 释放令牌 理论上释放的令牌加上剩余令牌数不可能超过最大数量 只有写错了每次获取1个 释放2个的情况

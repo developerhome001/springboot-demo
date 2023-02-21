@@ -40,7 +40,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
     }
 
     @Override
-    public boolean interceptorConsumer(NativeWebRequest request, HandlerMethod handler, Map<String, QpsData> releaseList) throws InterruptedException, QPSFailException {
+    public boolean interceptorConsumer(NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         var req = request.getNativeRequest(HttpServletRequest.class);
         if (req == null || "keray".equals(req.getHeader("keray"))) return false;
         var ip = userContext.currentIp();
@@ -74,17 +74,17 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
     }
 
     @Override
-    public void interceptor(RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, Map<String, QpsData> releaseList) throws InterruptedException, QPSFailException {
+    public void interceptor(RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         var uuid = annDataGetKey(data);
         interceptor(uuid, data, request, handler, releaseList);
     }
 
-    public final void interceptor(String uuid, RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, Map<String, QpsData> releaseList) throws InterruptedException, QPSFailException {
+    public final void interceptor(String uuid, RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         if (StrUtil.isNotEmpty(uuid)) {
             try {
                 this.getBean(data.bean()).acquire(uuid, data.namespace(), data.maxRate(), 1, data.millisecond(), data.appointCron(), data.recoveryCount(),
                         data.rejectStrategy(), data.waitTime(), data.waitSpeed(), data.needRelease());
-                if (data.needRelease()) releaseList.put(uuid, QpsData.of(data));
+                if (data.needRelease()) releaseList.add(QpsData.of(data, uuid));
             } catch (QPSFailException e) {
                 if (StrUtil.isNotBlank(data.rejectMessage()))
                     throw new QPSFailException(data.limitType() == RateLimitType.system, data.rejectMessage());
@@ -107,7 +107,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
      * @throws QPSFailException
      * @throws InterruptedException
      */
-    public boolean clientWord(Map<String, QpsData> clientData, String path, String key, String groupKey, String group, Map<String, QpsData> releaseList) throws QPSFailException, InterruptedException {
+    public boolean clientWord(Map<String, QpsData> clientData, String path, String key, String groupKey, String group, List<QpsData> releaseList) throws QPSFailException, InterruptedException {
         if (clientData == null) return false;
         // 通用接口QPS流控限制
         var value = clientData.get("*");
@@ -117,11 +117,11 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
             // 一秒后才会产生最大令牌数的令牌
             try {
                 rateLimiter.acquire(k, value.getNamespace(group), value.getMaxRate(), 1, value.getMillisecond(), value.getAppointCron(),
-                        value.getRecoveryCount(), value.getRejectStrategy(), value.getWaitTime(), value.getWaitSpeed());
+                        value.getRecoveryCount(), value.getRejectStrategy(), value.getWaitTime(), value.getWaitSpeed(), value.isNeedRelease());
                 if (value.isNeedRelease()) {
-                    var cp = value.copy();
+                    var cp = value.copy(k);
                     cp.setNamespace(value.getNamespace(group));
-                    releaseList.put(k, cp);
+                    releaseList.add(cp);
                 }
             } catch (QPSFailException e) {
                 throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage());
@@ -143,12 +143,13 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
             RateLimiterBean rateLimiter = this.getBean(value.getBean());
             var k = value.getTarget() == RateLimiterApiTarget.ip ? groupKey : key;
             try {
-                rateLimiter.acquire(k, String.format("%s:%s", group, namespace), value.getMaxRate(), 1, value.getMillisecond(), value.getAppointCron(),
-                        value.getRecoveryCount(), value.getRejectStrategy(), value.getWaitTime(), value.getWaitSpeed());
+                var ns = String.format("%s:%s", group, namespace);
+                rateLimiter.acquire(k, ns, value.getMaxRate(), 1, value.getMillisecond(), value.getAppointCron(),
+                        value.getRecoveryCount(), value.getRejectStrategy(), value.getWaitTime(), value.getWaitSpeed(), value.isNeedRelease());
                 if (value.isNeedRelease()) {
-                    var cp = value.copy();
-                    cp.setNamespace(group + namespace);
-                    releaseList.put(k, cp);
+                    var cp = value.copy(k);
+                    cp.setNamespace(ns);
+                    releaseList.add(cp);
                 }
                 return true;
             } catch (QPSFailException e) {
