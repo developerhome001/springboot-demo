@@ -2,6 +2,7 @@ package com.keray.common.gateway.limit;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.keray.common.diamond.Diamond;
 import com.keray.common.lock.RedissonLock;
 import com.keray.common.qps.spring.MemoryRateLimiterBean;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -38,18 +40,18 @@ public class QpsConfig {
 
     public synchronized void setData(String value) {
         if (StrUtil.isEmpty(value)) {
-            this.data = new HashMap<>();
+            this.data = new LinkedHashMap<>();
             return;
         }
-        Map<String, Map<String, QpsData>> data = new HashMap<>();
-        var map = JSON.parseObject(value);
+        Map<String, Map<String, QpsData>> data = new LinkedHashMap<>();
+        var map = JSON.parseObject(value, LinkedHashMap.class);
         for (var k : map.keySet()) {
-            var item = map.getJSONObject(k);
-            Map<String, QpsData> m = new HashMap<>();
+            var item = (JSONObject)map.get(k);
+            Map<String, QpsData> m = new LinkedHashMap<>();
             for (var k1 : item.keySet()) {
                 m.put(k1, item.getObject(k1, QpsData.class));
             }
-            data.put(k, m);
+            data.put(k.toString(), m);
         }
         this.data = data;
     }

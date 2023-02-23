@@ -151,12 +151,11 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
                     cp.setNamespace(ns);
                     releaseList.add(cp);
                 }
-                return true;
             } catch (QPSFailException e) {
                 throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage());
             }
         }
-        return false;
+        return true;
     }
 
 
