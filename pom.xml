@@ -6,7 +6,7 @@
     <groupId>com.keray.spring</groupId>
     <artifactId>dependencies</artifactId>
 
-    <version>1.1.1</version>
+    <version>1.1.2</version>
 
     <packaging>pom</packaging>
 
@@ -130,12 +130,12 @@
         </plugins>
     </build>
 
-<!--        <distributionManagement>-->
-<!--            <repository>-->
-<!--                <id>keray-releases</id>-->
-<!--                <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>-->
-<!--            </repository>-->
-<!--        </distributionManagement>-->
+        <distributionManagement>
+            <repository>
+                <id>keray-releases</id>
+                <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>
+            </repository>
+        </distributionManagement>
 
 <!--            <distributionManagement>-->
 <!--                <repository>-->
@@ -145,11 +145,11 @@
 <!--            </distributionManagement>-->
 
 
-    <distributionManagement>
-        <repository>
-            <id>cqvip-snapshots</id>
-            <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>
-        </repository>
-    </distributionManagement>
+<!--    <distributionManagement>-->
+<!--        <repository>-->
+<!--            <id>cqvip-snapshots</id>-->
+<!--            <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>-->
+<!--        </repository>-->
+<!--    </distributionManagement>-->
 
 </project>
