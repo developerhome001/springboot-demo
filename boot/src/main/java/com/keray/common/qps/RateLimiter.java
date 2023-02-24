@@ -11,6 +11,7 @@ import org.redisson.client.RedisException;
 import org.springframework.scheduling.support.CronExpression;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 令牌桶限流
@@ -20,77 +21,36 @@ import java.time.LocalDateTime;
 public class RateLimiter {
 
     /**
-     * @param key             令牌key
-     * @param namespace       令牌桶空间名
      * @param store           令牌桶数据仓库
-     * @param maxRate         最大令牌数量
-     * @param distributedLock 分布式锁  单机的情况下就可以不要分布式锁（还得保证一个key的操作是单线程的）
-     * @param acquireCount    获取令牌数量
-     * @param millisecond     下次产生令牌时间间隔（毫秒）
-     * @param appointCron     在指定的Cron时间点产生令牌
-     * @param recoveryCount   下次产生令牌数量
-     * @param rejectStrategy  令牌限流策略
-     * @param waitTime        等待时间
-     * @param waitSpeed       等待时间间隔
-     * @param needRelease     是否是可以释放的令牌桶  可以释放的令牌桶不会自己生成令牌
+     * @param distributedLock 分布式锁
      * @param <L>
      * @throws InterruptedException 异常中断
      * @throws QPSFailException     QPS阻止
      */
-    public static <L> void acquire(String key,
-                                   String namespace,
-                                   RateLimiterStore store,
-                                   int maxRate,
-                                   DistributedLock<L> distributedLock,
-                                   int acquireCount,
-                                   int millisecond,
-                                   String appointCron,
-                                   int recoveryCount,
-                                   RejectStrategy rejectStrategy,
-                                   int waitTime,
-                                   int waitSpeed,
-                                   boolean needRelease
-    ) throws QPSFailException, InterruptedException {
-        privateAcquire(generateUUid(key, namespace), store, maxRate, distributedLock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime, waitSpeed, false, needRelease);
+    public static <L> void acquire(RateLimiterParams params, RateLimiterStore store, DistributedLock<L> distributedLock) throws QPSFailException, InterruptedException {
+        if (StrUtil.isEmpty(params.getUuid())) params.setUuid(generateUUid(params.getKey(), params.getNamespace()));
+        privateAcquire(params, store, distributedLock, false);
 
     }
 
     /**
      * 获取令牌的具体实现
-     *
-     * @param uuid            令牌uuid
-     * @param store           令牌桶数据仓库
-     * @param maxRate         最大令牌数量
-     * @param distributedLock 分布式锁
-     * @param acquireCount    获取令牌数量
-     * @param millisecond     下次产生令牌时间间隔（毫秒）
-     * @param appointCron     在指定的Cron时间点产生令牌
-     * @param recoveryCount   下次产生令牌数量
-     * @param rejectStrategy  令牌限流策略
-     * @param waitTime        等待时间
-     * @param waitSpeed       等待时间间隔
-     * @param haveLock        是否已经加锁
-     * @param needRelease     是否是可以释放的令牌桶  可以释放的令牌桶不会自己生成令牌
-     * @param <L>
-     * @throws InterruptedException 异常中断
-     * @throws QPSFailException     QPS阻止
      */
-    private static <L> void privateAcquire(String uuid,
-                                           RateLimiterStore store,
-                                           int maxRate,
-                                           DistributedLock<L> distributedLock,
-                                           int acquireCount,
-                                           int millisecond,
-                                           String appointCron,
-                                           int recoveryCount,
-                                           RejectStrategy rejectStrategy,
-                                           int waitTime,
-                                           int waitSpeed,
-                                           boolean haveLock,
-                                           boolean needRelease
-    ) throws InterruptedException, QPSFailException {
-        if (maxRate < 1 || recoveryCount < 1 || millisecond < 1)
-            throw new RuntimeException("最大令牌数 间隔时间 下次产生令牌上不允许小于1");
+    private static <L> void privateAcquire(RateLimiterParams params, RateLimiterStore store, DistributedLock<L> distributedLock, boolean haveLock) throws InterruptedException, QPSFailException {
+        var uuid = params.getUuid();
+        var needRelease = params.isNeedRelease();
+        var maxRate = params.getMaxRate();
+        var releaseVersion = params.getReleaseVersion();
+        var millisecond = params.getMillisecond();
+        var appointCron = params.getAppointCron();
+        var recoveryCount = params.getRecoveryCount();
+        var acquireCount = params.getAcquireCount();
+        if (maxRate < 1 || acquireCount < 1)
+            throw new RuntimeException("最大令牌数不允许小于1 获取令牌数不允许小于1");
+        var r = !needRelease;
+        r = r && (StrUtil.isEmpty(appointCron) || millisecond < 1);
+        r = r && recoveryCount < 1;
+        if (r) throw new RuntimeException("令牌释放参数错误");
         L lock = null;
         try {
             // 分布式锁锁定当前的key
@@ -107,7 +67,7 @@ public class RateLimiter {
             // 如果存储桶没有令牌数据 初始化令牌桶
             if (data == null) {
                 lastTimestamp = now;
-                rateBalance = initRate(store, maxRate, uuid, now);
+                rateBalance = initRate(store, maxRate, uuid, now, releaseVersion);
             } else {
                 lastTimestamp = data[0];
                 rateBalance = Math.toIntExact(data[1]);
@@ -118,17 +78,22 @@ public class RateLimiter {
                 var newRate = createdNewRate(now, lastTimestamp, millisecond, appointCron, recoveryCount, rateBalance, maxRate);
                 lastTimestamp = newRate[0].longValue();
                 rateBalance = newRate[1].intValue();
+            } else {
+                // 如果releaseVersion变化 将令牌桶自动释放到最大值
+                if (data != null && (data.length > 2 && data[2] != releaseVersion)) {
+                    rateBalance = maxRate;
+                }
             }
             // 令牌剩余量小于需求量
             // 进入递归重新获取令牌的阶段一直锁定当前key没问题
             // 最先来的请求都没拿到令牌，后面来的接口肯定也拿不到令牌，就直接让后来的接口等待分布式锁释放后表示可能有令牌了
             if (rateBalance < acquireCount) {
                 // 令牌不足
-                reject(uuid, store, maxRate, distributedLock, acquireCount, millisecond, appointCron, recoveryCount, rejectStrategy, waitTime, waitSpeed, needRelease);
+                reject(params, store, distributedLock);
             } else {
                 // 正常拿到令牌返回
                 rateBalance -= acquireCount;
-                store.setStoreData(uuid, rateDataTrans(lastTimestamp, rateBalance));
+                store.setStoreData(uuid, rateDataTrans(lastTimestamp, rateBalance, releaseVersion));
             }
         } finally {
             if (lock != null) {
@@ -144,17 +109,18 @@ public class RateLimiter {
     /**
      * 释放令牌
      *
-     * @param key             令牌key
-     * @param namespace       令牌桶空间名
-     * @param maxRate         最大令牌数量
+     * @param params          令牌桶参数
      * @param store           令牌桶数据仓库
      * @param distributedLock 分布式锁
-     * @param releaseCnt      释放令牌个数  一般情况都是1
      * @param <L>
      * @throws InterruptedException
      */
-    public static <L> void release(String key, String namespace, RateLimiterStore store, Integer maxRate, DistributedLock<L> distributedLock, int releaseCnt) throws InterruptedException {
-        var uuid = generateUUid(key, namespace);
+    public static <L> void release(RateLimiterParams params, RateLimiterStore store, DistributedLock<L> distributedLock) throws InterruptedException {
+        if (StrUtil.isEmpty(params.getUuid()))
+            params.setUuid(generateUUid(params.getKey(), params.getNamespace()));
+        var uuid = params.getUuid();
+        var releaseCnt = params.getReleaseCnt();
+        var maxRate = params.getMaxRate();
         L lock = null;
         try {
             // 写操作先获取分布式锁
@@ -169,9 +135,17 @@ public class RateLimiter {
             var lastTimestamp = data[0] + 1;
             // 获取剩余令牌加上释放令牌数量
             var rateBalance = Math.toIntExact(data[1]) + releaseCnt;
+            // 获取版本
+            var releaseVersion = 0L;
+            if (data.length > 2) {
+                releaseVersion = data[2];
+                // 版本号变动后是否到最大
+                if (params.getReleaseVersion() != releaseVersion) {
+                    rateBalance = maxRate;
+                }
+            }
             // 释放令牌 理论上释放的令牌加上剩余令牌数不可能超过最大数量 只有写错了每次获取1个 释放2个的情况
-            // 令牌释放时不修改上次令牌获取时间  maxRate不传的情况下不处理
-            store.setStoreData(uuid, rateDataTrans(lastTimestamp, maxRate != null ? Math.min(rateBalance, maxRate) : rateBalance));
+            store.setStoreData(uuid, rateDataTrans(lastTimestamp, Math.min(rateBalance, maxRate), releaseVersion));
         } finally {
             if (lock != null) {
                 try {
@@ -184,30 +158,16 @@ public class RateLimiter {
 
     /**
      * 令牌获取失败
-     *
-     * @param uuid
      */
-    private static <L> void reject(String uuid,
-                                   RateLimiterStore store,
-                                   int maxRate,
-                                   DistributedLock<L> distributedLock,
-                                   int acquireCount,
-                                   int millisecond,
-                                   String appointCron,
-                                   int recoveryCount,
-                                   RejectStrategy rejectStrategy,
-                                   int waitTime,
-                                   int waitSpeed,
-                                   boolean needRelease
-    ) throws InterruptedException, QPSFailException {
+    private static <L> void reject(RateLimiterParams params, RateLimiterStore store, DistributedLock<L> distributedLock) throws InterruptedException, QPSFailException {
+        var rejectStrategy = params.getRejectStrategy();
+        var waitTime = params.getWaitTime();
+        var waitSpeed = params.getWaitSpeed();
         if (rejectStrategy == RejectStrategy.noting) return;
         if (rejectStrategy == RejectStrategy.throw_exception) throw new QPSFailException();
         if (rejectStrategy == RejectStrategy.wait && waitTime > 0) {
             Thread.sleep(waitSpeed);
-            privateAcquire(uuid, store, maxRate, distributedLock,
-                    acquireCount, millisecond, appointCron, recoveryCount,
-                    rejectStrategy, waitTime - waitSpeed, waitSpeed,
-                    true, needRelease);
+            privateAcquire(params, store, distributedLock, true);
             return;
         }
         throw new QPSFailException();
@@ -220,9 +180,9 @@ public class RateLimiter {
      * @param timestamp
      * @return
      */
-    private static int initRate(RateLimiterStore store, int maxRate, String key, long timestamp) {
+    private static int initRate(RateLimiterStore store, int maxRate, String key, long timestamp, long releaseVersion) {
         var data = new Long[]{timestamp, (long) maxRate};
-        store.setStoreData(key, rateDataTrans(data[0], Math.toIntExact(data[1])));
+        store.setStoreData(key, rateDataTrans(data[0], Math.toIntExact(data[1]), releaseVersion));
         return maxRate;
     }
 
@@ -235,6 +195,7 @@ public class RateLimiter {
     private static Long[] rateDataTrans(String storeData) {
         if (StrUtil.isEmpty(storeData)) return null;
         var s = storeData.split("_");
+        if (s.length > 2) return new Long[]{Long.parseLong(s[0]), Long.parseLong(s[1]), Long.parseLong(s[2])};
         return new Long[]{Long.parseLong(s[0]), Long.parseLong(s[1])};
     }
 
@@ -245,7 +206,8 @@ public class RateLimiter {
      * @param rateCount
      * @return
      */
-    private static String rateDataTrans(Long timestamp, int rateCount) {
+    private static String rateDataTrans(Long timestamp, int rateCount, long releaseVersion) {
+        if (releaseVersion > 0) return String.format("%d_%d_%d", timestamp, rateCount, releaseVersion);
         return String.format("%d_%d", timestamp, rateCount);
     }
 

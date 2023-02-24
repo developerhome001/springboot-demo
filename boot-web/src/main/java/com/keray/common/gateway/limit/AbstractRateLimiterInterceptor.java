@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.keray.common.IUserContext;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.exception.QPSFailException;
-import com.keray.common.qps.spring.MemoryRateLimiterBean;
+import com.keray.common.qps.RateLimiterParams;
 import com.keray.common.qps.spring.RateLimiterBean;
 import com.keray.common.util.MoreUriPatternMatcher;
 import com.keray.common.utils.IpAuthUtil;
@@ -37,6 +37,22 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
         } else {
             return userContext.currentUserId();
         }
+    }
+
+    public static RateLimiterParams rateLimiterApi2params(RateLimiterApi api) {
+        return new RateLimiterParams()
+                .setNamespace(api.namespace())
+                .setMaxRate(api.maxRate())
+                .setAcquireCount(1)
+                .setMillisecond(api.millisecond())
+                .setAppointCron(api.appointCron())
+                .setRecoveryCount(api.recoveryCount())
+                .setRejectStrategy(api.rejectStrategy())
+                .setWaitTime(api.waitTime())
+                .setWaitSpeed(api.waitSpeed())
+                .setNeedRelease(api.needRelease())
+                .setReleaseCnt(api.releaseCnt())
+                ;
     }
 
     @Override
@@ -82,8 +98,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
     public final void interceptor(String uuid, RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         if (StrUtil.isNotEmpty(uuid)) {
             try {
-                this.getBean(data.bean()).acquire(uuid, data.namespace(), data.maxRate(), 1, data.millisecond(), data.appointCron(), data.recoveryCount(),
-                        data.rejectStrategy(), data.waitTime(), data.waitSpeed(), data.needRelease());
+                this.getBean(data.bean()).acquire(rateLimiterApi2params(data).setKey(uuid));
                 if (data.needRelease()) releaseList.add(QpsData.of(data, uuid));
             } catch (QPSFailException e) {
                 if (StrUtil.isNotBlank(data.rejectMessage()))
@@ -96,7 +111,13 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
     @Override
     public void release(String key, QpsData qpsData, NativeWebRequest request, HandlerMethod handler) throws InterruptedException {
         if (StrUtil.isNotEmpty(key)) {
-            this.getBean(qpsData.getBean()).release(key, qpsData.getNamespace(), qpsData.getMaxRate(), qpsData.getReleaseCnt());
+            this.getBean(qpsData.getBean()).release(new RateLimiterParams()
+                    .setKey(key)
+                    .setNamespace(qpsData.getNamespace())
+                    .setMaxRate(qpsData.getMaxRate())
+                    .setReleaseCnt(qpsData.getReleaseCnt())
+                    .setReleaseVersion(qpsData.getReleaseVersion())
+            );
         }
     }
 
@@ -116,8 +137,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
             var k = value.getTarget() == RateLimiterApiTarget.ip ? groupKey : key;
             // 一秒后才会产生最大令牌数的令牌
             try {
-                rateLimiter.acquire(k, value.getNamespace(group), value.getMaxRate(), 1, value.getMillisecond(), value.getAppointCron(),
-                        value.getRecoveryCount(), value.getRejectStrategy(), value.getWaitTime(), value.getWaitSpeed(), value.isNeedRelease());
+                rateLimiter.acquire(value.toParams().setKey(k).setNamespace(value.getNamespace(group)));
                 if (value.isNeedRelease()) {
                     var cp = value.copy(k);
                     cp.setNamespace(value.getNamespace(group));
@@ -133,9 +153,11 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
         if (value != null && value.getNamespace() != null) {
             // URI固定分配空间
             namespace = value.getNamespace();
-            value = uriVal(clientData, value.getNamespace(), true);
+            var nvalue = uriVal(clientData, value.getNamespace(), true);
+            // 如果uri设定的空间名没设置QPS数据 直接使用uri设置的数据
+            if (nvalue != null) value = nvalue;
         }
-        if (value != null) {
+        if (value != null && value.getMaxRate() > 0) {
             if (namespace == null) {
                 // 每个URI分配一个空间
                 namespace = MD5Util.MD5Encode(path);
@@ -144,8 +166,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
             var k = value.getTarget() == RateLimiterApiTarget.ip ? groupKey : key;
             try {
                 var ns = String.format("%s:%s", group, namespace);
-                rateLimiter.acquire(k, ns, value.getMaxRate(), 1, value.getMillisecond(), value.getAppointCron(),
-                        value.getRecoveryCount(), value.getRejectStrategy(), value.getWaitTime(), value.getWaitSpeed(), value.isNeedRelease());
+                rateLimiter.acquire(value.toParams().setKey(k).setNamespace(ns));
                 if (value.isNeedRelease()) {
                     var cp = value.copy(k);
                     cp.setNamespace(ns);
@@ -186,8 +207,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
                     }
                 }
                 try {
-                    rateLimiter.acquire(key, namespace, value.getMaxRate(), 1, value.getMillisecond(), value.getAppointCron(),
-                            value.getRecoveryCount(), value.getRejectStrategy(), value.getWaitTime(), value.getWaitSpeed());
+                    rateLimiter.acquire(value.toParams().setKey(key).setNamespace(namespace));
                 } catch (QPSFailException e) {
                     throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage());
                 }

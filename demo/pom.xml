@@ -19,7 +19,7 @@
             <dependency>
                 <groupId>com.keray.spring</groupId>
                 <artifactId>dependencies</artifactId>
-                <version>1.1.2</version>
+                <version>1.1.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

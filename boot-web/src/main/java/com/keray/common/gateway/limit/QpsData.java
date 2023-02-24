@@ -2,6 +2,7 @@ package com.keray.common.gateway.limit;
 
 import cn.hutool.core.util.StrUtil;
 import com.keray.common.annotation.RateLimiterApi;
+import com.keray.common.qps.RateLimiterParams;
 import com.keray.common.qps.RejectStrategy;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +16,7 @@ public class QpsData {
     /**
      * 最大令牌数
      */
-    private Integer maxRate;
+    private int maxRate;
 
     /**
      * 空间名
@@ -86,6 +87,8 @@ public class QpsData {
     private boolean needRelease;
     private RateLimitType limitType;
 
+    private long releaseVersion;
+
 
     public static QpsData of(RateLimiterApi rateLimiterApi, String key) {
         var data = new QpsData();
@@ -122,7 +125,26 @@ public class QpsData {
         data.releaseCnt = this.releaseCnt;
         data.needRelease = this.needRelease;
         data.limitType = this.limitType;
+        data.releaseVersion = this.releaseVersion;
         return data;
+    }
+
+    public RateLimiterParams toParams() {
+        return new RateLimiterParams()
+                .setKey(getKey())
+                .setNamespace(namespace)
+                .setMaxRate(maxRate)
+                .setAcquireCount(acquireCount)
+                .setMillisecond(millisecond)
+                .setAppointCron(appointCron)
+                .setRecoveryCount(recoveryCount)
+                .setRejectStrategy(rejectStrategy)
+                .setWaitTime(waitTime)
+                .setWaitSpeed(waitSpeed)
+                .setNeedRelease(needRelease)
+                .setReleaseCnt(releaseCnt)
+                .setReleaseVersion(releaseVersion)
+                ;
     }
 
     public QpsData(Integer cnt, String bean) {
