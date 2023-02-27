@@ -55,6 +55,7 @@ public class RateLimiter {
         try {
             // 分布式锁锁定当前的key
             // 如果已经加锁过 不在加锁  加过锁只有在等待时递归调用会出现
+            // 释放型令牌在重试时
             if (!haveLock && distributedLock != null) {
                 lock = distributedLock.tryLock(distributedLockKey(uuid));
             }
@@ -89,6 +90,14 @@ public class RateLimiter {
             // 最先来的请求都没拿到令牌，后面来的接口肯定也拿不到令牌，就直接让后来的接口等待分布式锁释放后表示可能有令牌了
             if (rateBalance < acquireCount) {
                 // 令牌不足
+                // 可释放型令牌进入等待的时候提前释放分布式锁  不提前释放会导致释放令牌的时候拿不到分布式锁 导致死锁
+                if (needRelease && lock != null) {
+                    try {
+                        distributedLock.unLock(lock);
+                        lock = null;
+                    } catch (Throwable ignore) {
+                    }
+                }
                 reject(params, store, distributedLock);
             } else {
                 // 正常拿到令牌返回
@@ -167,7 +176,8 @@ public class RateLimiter {
         if (rejectStrategy == RejectStrategy.throw_exception) throw new QPSFailException();
         if (rejectStrategy == RejectStrategy.wait && waitTime > 0) {
             Thread.sleep(waitSpeed);
-            privateAcquire(params, store, distributedLock, true);
+            // 释放型令牌提前释放锁了  需要重新加锁
+            privateAcquire(params, store, distributedLock, !params.isNeedRelease());
             return;
         }
         throw new QPSFailException();
