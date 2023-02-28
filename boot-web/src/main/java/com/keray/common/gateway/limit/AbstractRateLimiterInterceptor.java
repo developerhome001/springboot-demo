@@ -83,7 +83,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
             // url的QPS控制
             var urlData = getQpsConfig().getUrlData();
             hadWork = urlQps(urlData, uriVal(urlData, req.getRequestURI(), false),
-                    ip, req, handler, null, false);
+                    ip, req, handler, null, false, releaseList);
 
         }
         return hadWork;
@@ -181,7 +181,7 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
 
 
     protected boolean urlQps(Map<String, LinkedList<QpsData>> urlData,
-                             LinkedList<QpsData> list, String ip, HttpServletRequest req, HandlerMethod handler, String namespace, boolean isNamespace) throws InterruptedException, QPSFailException {
+                             LinkedList<QpsData> list, String ip, HttpServletRequest req, HandlerMethod handler, String namespace, boolean isNamespace, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         var hadWork = false;
         if (list != null) {
             // 基于配置文件的QPS控制已经处理，设置信号让基于注解的处理无效  数组为空表示这个接口放行
@@ -202,12 +202,19 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
                 } else if (!isNamespace) {
                     var nameList = urlData.get(namespace);
                     if (nameList != null) {
-                        urlQps(urlData, nameList, ip, req, handler, namespace, true);
+                        urlQps(urlData, nameList, ip, req, handler, namespace, true, releaseList);
                         return true;
                     }
                 }
                 try {
-                    rateLimiter.acquire(value.toParams().setKey(key).setNamespace(namespace));
+                    namespace = "URL_QPS:" + namespace;
+                    var params = value.toParams().setKey(key).setNamespace(namespace);
+                    rateLimiter.acquire(params);
+                    if (value.isNeedRelease()) {
+                        var cp = value.copy(key);
+                        cp.setNamespace(namespace);
+                        releaseList.add(cp);
+                    }
                 } catch (QPSFailException e) {
                     throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage());
                 }
