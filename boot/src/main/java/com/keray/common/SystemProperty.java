@@ -14,4 +14,10 @@ public class SystemProperty {
      * header头表示appid的key
      */
     public static final String HEADER_APPID = "HEADER_APPID";
+
+
+    /**
+     * header头表示appid的key
+     */
+    public static final String MEMORY_RATE_MAX_LEN = "MEMORY_RATE_MAX_LEN";
 }

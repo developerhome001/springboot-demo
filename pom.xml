@@ -76,7 +76,6 @@
                 <artifactId>mybatis-plus</artifactId>
                 <version>${project.mybatis-plus}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-spring-boot-starter</artifactId>
@@ -130,12 +129,12 @@
         </plugins>
     </build>
 
-<!--        <distributionManagement>-->
-<!--            <repository>-->
-<!--                <id>keray-releases</id>-->
-<!--                <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>-->
-<!--            </repository>-->
-<!--        </distributionManagement>-->
+        <distributionManagement>
+            <repository>
+                <id>keray-releases</id>
+                <url>https://packages.aliyun.com/maven/repository/2010881-release-hOyeRP/</url>
+            </repository>
+        </distributionManagement>
 
 <!--            <distributionManagement>-->
 <!--                <repository>-->
@@ -145,11 +144,11 @@
 <!--            </distributionManagement>-->
 
 
-    <distributionManagement>
-        <repository>
-            <id>cqvip-snapshots</id>
-            <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>
-        </repository>
-    </distributionManagement>
+<!--    <distributionManagement>-->
+<!--        <repository>-->
+<!--            <id>cqvip-snapshots</id>-->
+<!--            <url>https://packages.aliyun.com/maven/repository/2219534-release-3y4mJo/</url>-->
+<!--        </repository>-->
+<!--    </distributionManagement>-->
 
 </project>

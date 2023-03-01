@@ -80,11 +80,13 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
             }
         }
         if (!hadWork) {
-            // url的QPS控制
             var urlData = getQpsConfig().getUrlData();
-            hadWork = urlQps(urlData, uriVal(urlData, req.getRequestURI(), false),
-                    ip, req, handler, null, false, releaseList);
-
+            // url通配限制
+            var value = urlData.get("*");
+            urlQps(urlData, value, ip, req, handler, null, false, releaseList);
+            // 指定url的QPS控制
+            value = uriVal(urlData, req.getRequestURI(), false);
+            hadWork = urlQps(urlData, value, ip, req, handler, null, false, releaseList);
         }
         return hadWork;
     }

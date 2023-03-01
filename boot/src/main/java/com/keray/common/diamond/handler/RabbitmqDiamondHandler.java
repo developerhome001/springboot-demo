@@ -45,7 +45,11 @@ public class RabbitmqDiamondHandler implements DiamondHandler {
         var object = JSON.parseObject(message.getBody());
         var key = object.getString("key");
         var value = object.getString("value");
-        diamondManger.diamondChange(key, value);
+        try {
+            diamondManger.diamondChange(key, value);
+        } catch (Exception ignore) {
+
+        }
     }
 
 }

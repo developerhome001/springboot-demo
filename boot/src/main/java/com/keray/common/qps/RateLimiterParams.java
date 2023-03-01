@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 @Setter
 @Accessors(chain = true)
 public class RateLimiterParams {
+
     private String uuid;
     /**
      * 令牌key
@@ -25,11 +26,11 @@ public class RateLimiterParams {
     /**
      * 获取令牌数量
      */
-    private int acquireCount;
+    private int acquireCount = 1;
     /**
      * 下次产生令牌时间间隔（毫秒）
      */
-    private int millisecond;
+    private int millisecond = 1000;
     /**
      * 在指定的Cron时间点产生令牌
      */
@@ -37,7 +38,7 @@ public class RateLimiterParams {
     /**
      * 下次产生令牌数量
      */
-    private int recoveryCount;
+    private int recoveryCount = 1;
     /**
      * 令牌限流策略
      */
@@ -45,11 +46,11 @@ public class RateLimiterParams {
     /**
      * 等待时间
      */
-    private int waitTime;
+    private int waitTime = 5000;
     /**
      * 等待时间间隔
      */
-    private int waitSpeed;
+    private int waitSpeed = 50;
     /**
      * 是否是可以释放的令牌桶  可以释放的令牌桶不会自己生成令牌
      */
@@ -58,9 +59,9 @@ public class RateLimiterParams {
     /**
      * 令牌释放个数
      */
-    private int releaseCnt;
+    private int releaseCnt = 1;
     /**
      * 释放型令牌版本 版本与前面不一致时自动将令牌扩容到最大值 保证可释放型令牌实现动态扩容
      */
-    private long releaseVersion;
+    private long releaseVersion = 1;
 }
