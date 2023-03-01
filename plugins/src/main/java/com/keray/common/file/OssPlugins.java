@@ -167,7 +167,7 @@ public class OssPlugins extends AliyunPlugins implements FileUploadPlugins, File
 
     public UploadResult ossUpload(PutObjectRequest putObjectRequest, boolean back) {
         String taskId = "UIX" + UUIDUtil.generateUUIDByTimestamp();
-        if (back) {
+        if (back && redisTemplate != null) {
             putObjectRequest.withProgressListener(new ProgressListener() {
                 private long bytesWritten = 0;
                 private long totalBytes = 0;
