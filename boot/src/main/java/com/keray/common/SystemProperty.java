@@ -20,4 +20,8 @@ public class SystemProperty {
      * header头表示appid的key
      */
     public static final String MEMORY_RATE_MAX_LEN = "MEMORY_RATE_MAX_LEN";
+    /**
+     * sys线程池的大小
+     */
+    public static final String SYS_POOL_SIZE = "SYS_POOL_SIZE";
 }

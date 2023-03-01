@@ -2,6 +2,7 @@ package com.keray.common.threadpool;
 
 import com.keray.common.IContext;
 import com.keray.common.SpringContextHolder;
+import com.keray.common.SystemProperty;
 import org.springframework.boot.autoconfigure.task.TaskSchedulingProperties;
 import org.springframework.boot.task.TaskSchedulerBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -23,7 +24,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SysThreadPool {
     private static final AtomicInteger COUNT = new AtomicInteger(0);
 
-    private static final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(50, 1000, 10,
+    private static final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+            Integer.parseInt(System.getProperty(SystemProperty.SYS_POOL_SIZE, "500")),
+            Integer.parseInt(System.getProperty(SystemProperty.SYS_POOL_SIZE, "500")),
+            10,
             TimeUnit.SECONDS, new MemorySafeLinkedBlockingQueue<>(16 * 1024 * 1024),
             r -> {
                 Thread t = new Thread(r);
