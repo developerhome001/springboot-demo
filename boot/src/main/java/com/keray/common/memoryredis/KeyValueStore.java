@@ -39,8 +39,13 @@ public class KeyValueStore<K, V> {
     }
 
 
+    /**
+     * @param key
+     * @param value
+     * @param expireTime 多少毫秒后过期
+     */
     public void put(K key, V value, long expireTime) {
-        var node = new Node<>(key, long2time(expireTime), value);
+        var node = new Node<>(key, long2time(System.currentTimeMillis() + expireTime), value);
         // 判断内存
         if (!hasRemainedMemory()) {
             // 内存不够  进行最近过期释放
@@ -55,6 +60,7 @@ public class KeyValueStore<K, V> {
 
     public V get(K key) {
         var v = map.get(key);
+        if (v == null) return null;
         if (isExpired(v)) {
             map.remove(key);
             return null;
@@ -130,9 +136,9 @@ public class KeyValueStore<K, V> {
         var store = new KeyValueStore();
         var now = System.currentTimeMillis();
         store.put("123", "123", now + 1000);
-        for (;;) {
+        for (; ; ) {
             Thread.sleep(100);
-            var val  =store.get("123");
+            var val = store.get("123");
             if (val == null) break;
             System.out.println(val);
         }
