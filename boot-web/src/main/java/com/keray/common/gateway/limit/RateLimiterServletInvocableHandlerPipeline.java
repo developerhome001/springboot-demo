@@ -1,5 +1,6 @@
 package com.keray.common.gateway.limit;
 
+import cn.hutool.core.util.StrUtil;
 import com.keray.common.IUserContext;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.annotation.RateLimiterGroup;
@@ -8,8 +9,10 @@ import com.keray.common.gateway.downgrade.ApiDowngradeServletInvocableHandlerPip
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
 import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
@@ -99,7 +102,9 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
             rateLimiterInterceptor.interceptor(data, request, handler, releaseList);
         } catch (QPSFailException failException) {
             log.warn("qps异常 ip={},duid={},userId={},agent={}", userContext.currentIp(), userContext.getDuid(), userContext.currentUserId(), request.getHeader("User-Agent"));
-            throw failException;
+            if (StrUtil.isNotBlank(data.rejectMessage()))
+                throw new QPSFailException(data.limitType() == RateLimitType.system, data.rejectMessage());
+            throw new QPSFailException(data.limitType() == RateLimitType.system);
         }
     }
 

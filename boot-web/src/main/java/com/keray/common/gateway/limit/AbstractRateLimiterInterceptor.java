@@ -99,14 +99,8 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
 
     public final void interceptor(String uuid, RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         if (StrUtil.isNotEmpty(uuid)) {
-            try {
-                this.getBean(data.bean()).acquire(rateLimiterApi2params(data).setKey(uuid));
-                if (data.needRelease()) releaseList.add(QpsData.of(data, uuid));
-            } catch (QPSFailException e) {
-                if (StrUtil.isNotBlank(data.rejectMessage()))
-                    throw new QPSFailException(data.limitType() == RateLimitType.system, data.rejectMessage());
-                throw new QPSFailException(data.limitType() == RateLimitType.system);
-            }
+            this.getBean(data.bean()).acquire(rateLimiterApi2params(data).setKey(uuid));
+            if (data.needRelease()) releaseList.add(QpsData.of(data, uuid));
         }
     }
 

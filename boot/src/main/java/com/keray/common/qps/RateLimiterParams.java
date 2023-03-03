@@ -64,4 +64,12 @@ public class RateLimiterParams {
      * 释放型令牌版本 版本与前面不一致时自动将令牌扩容到最大值 保证可释放型令牌实现动态扩容
      */
     private long releaseVersion = 0;
+
+    String getUuid() {
+        return uuid;
+    }
+
+    void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 }
