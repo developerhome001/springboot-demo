@@ -176,6 +176,7 @@ public class RateLimiter {
         if (rejectStrategy == RejectStrategy.throw_exception) throw new QPSFailException();
         if (rejectStrategy == RejectStrategy.wait && waitTime > 0) {
             Thread.sleep(waitSpeed);
+            params.setWaitTime(params.getWaitTime() - waitSpeed);
             // 释放型令牌提前释放锁了  需要重新加锁
             privateAcquire(params, store, distributedLock, !params.isNeedRelease());
             return;
