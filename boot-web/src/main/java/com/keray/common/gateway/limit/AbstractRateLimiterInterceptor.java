@@ -9,7 +9,9 @@ import com.keray.common.qps.spring.RateLimiterBean;
 import com.keray.common.util.MoreUriPatternMatcher;
 import com.keray.common.utils.IpAuthUtil;
 import com.keray.common.utils.MD5Util;
+import lombok.Getter;
 import org.apache.http.protocol.UriPatternMatcher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
@@ -19,12 +21,23 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
+public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
 
     @Resource
     protected IUserContext<?> userContext;
 
-    public abstract QpsConfig getQpsConfig();
+    @Resource
+    protected RateLimiterBean redisRateLimiterBean;
+
+    @Resource
+    private RateLimiterBean memoryRateLimiterBean;
+
+    @Resource
+    @Lazy
+    @Getter
+    private QpsConfig qpsConfig;
+
+
 
     protected String annDataGetKey(RateLimiterApi data) {
         if (data.target() == RateLimiterApiTarget.namespace) {
@@ -246,5 +259,10 @@ public abstract class AbstractRateLimiterInterceptor implements RateLimiterInter
         return matcher;
     }
 
-    protected abstract RateLimiterBean getBean(String name);
+
+    protected RateLimiterBean getBean(String name) {
+        if ("redisRateLimiterBean".equals(name)) return redisRateLimiterBean;
+        if ("redis".equals(name)) return redisRateLimiterBean;
+        return memoryRateLimiterBean;
+    }
 }

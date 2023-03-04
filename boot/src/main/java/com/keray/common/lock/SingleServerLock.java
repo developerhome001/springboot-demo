@@ -7,12 +7,15 @@ import org.springframework.scheduling.support.CronTrigger;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Slf4j
 public class SingleServerLock implements DistributedLock<String> {
 
-    private final ConcurrentHashMap<String, Integer> data = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ReentrantLock> data = new ConcurrentHashMap<>();
 
     private static final SingleServerLock instance = new SingleServerLock();
 
@@ -32,22 +35,17 @@ public class SingleServerLock implements DistributedLock<String> {
 
     @Override
     public String tryLock(String key, long timeout) throws InterruptedException, TimeoutException {
-        int threadCode = Thread.currentThread().hashCode();
         // 加锁
-        if (data.computeIfAbsent(key, k -> threadCode) == threadCode) return key;
-        // 加锁失败  开始轮训
-        long now = System.currentTimeMillis();
-        while (!Thread.currentThread().isInterrupted()) {
-            long nowx = System.currentTimeMillis();
-            if (nowx - now > timeout) throw new TimeoutException();
-            if (data.computeIfAbsent(key, k -> threadCode) == threadCode) return key;
-        }
-        throw new InterruptedException();
+        var lock = data.computeIfAbsent(key, k -> new ReentrantLock());
+        var r = lock.tryLock(timeout, TimeUnit.MILLISECONDS);
+        if (!r) throw new TimeoutException();
+        return key;
     }
 
     @Override
     public void unLock(String lock) {
-        data.remove(lock);
+        var lk = data.remove(lock);
+        if (lk != null) lk.unlock();
     }
 
 }
