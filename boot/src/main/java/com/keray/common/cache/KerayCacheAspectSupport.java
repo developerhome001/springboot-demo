@@ -19,6 +19,8 @@ public class KerayCacheAspectSupport extends CacheInterceptor {
 
     public static ThreadPoolTaskScheduler taskScheduler;
 
+    public final static ThreadLocal<Integer> TTL = new ThreadLocal<>();
+
     static {
         TaskSchedulerBuilder builder = new TaskSchedulerBuilder();
         builder = builder.poolSize(5);
@@ -39,30 +41,39 @@ public class KerayCacheAspectSupport extends CacheInterceptor {
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
-        Object result = super.invoke(invocation);
-        // 如果是自动缓存线程
-        if (Thread.currentThread().getName().startsWith(THREAD_NAME)) {
-            // 刷新缓存 todo
-        }
         var method = invocation.getMethod();
-        var ani = method.getAnnotation(AutoFlushCache.class);
-        if (ani == null) return result;
-        // 如果自增一次后大于总数
-        if (count.getAndIncrement() > MAX) {
-            // 自减后返回结果
-            count.getAndDecrement();
-            return result;
+        var aniTime = method.getAnnotation(CacheTime.class);
+        if (aniTime != null) {
+            TTL.set(aniTime.value());
         }
-        // 根据设定时间自动调用下一次
-        var time = ani.time();
-        taskScheduler.schedule(() -> {
-            try {
-                method.invoke(invocation.getThis(), invocation.getArguments());
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                log.error("定时任务失败", e);
+        try {
+            Object result = super.invoke(invocation);
+            // 如果是自动缓存线程
+            if (Thread.currentThread().getName().startsWith(THREAD_NAME)) {
+                // 刷新缓存 todo
             }
-        }, new PeriodicTrigger(time));
-        return result;
+            var ani = method.getAnnotation(AutoFlushCache.class);
+            if (ani == null) return result;
+            // 如果自增一次后大于总数
+            if (count.getAndIncrement() > MAX) {
+                // 自减后返回结果
+                count.getAndDecrement();
+                return result;
+            }
+            // 根据设定时间自动调用下一次
+            var time = ani.time();
+            taskScheduler.schedule(() -> {
+                try {
+                    method.invoke(invocation.getThis(), invocation.getArguments());
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    log.error("定时任务失败", e);
+                }
+                count.getAndDecrement();
+            }, new PeriodicTrigger(time));
+            return result;
+        } finally {
+            TTL.remove();
+        }
     }
 
     @PreDestroy

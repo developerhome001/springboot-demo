@@ -14,17 +14,22 @@ import org.springframework.cache.ehcache.EhCacheManagerUtils;
 import org.springframework.cache.interceptor.BeanFactoryCacheOperationSourceAdvisor;
 import org.springframework.cache.interceptor.CacheInterceptor;
 import org.springframework.cache.interceptor.CacheOperationSource;
+import org.springframework.cache.interceptor.SimpleKey;
 import org.springframework.context.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.format.support.DefaultFormattingConversionService;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
@@ -75,7 +80,9 @@ public class CacheRedisConfig extends AbstractCachingConfiguration {
             config = config.entryTtl(redisProperties.getTimeToLive());
         }
         if (redisProperties.getKeyPrefix() != null) {
-            config = config.prefixCacheNameWith(redisProperties.getKeyPrefix());
+            config = config.computePrefixWith(name -> redisProperties.getKeyPrefix() + ":" + name + ":");
+        } else {
+            config = config.computePrefixWith(name -> name + ":");
         }
         if (!redisProperties.isCacheNullValues()) {
             config = config.disableCachingNullValues();

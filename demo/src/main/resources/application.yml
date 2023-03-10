@@ -39,6 +39,8 @@ spring:
     type: redis
     ehcache:
       config: classpath:baseEhcache.xml
+    redis:
+      key-prefix: cache
   data:
     mongodb:
       auto-index-creation: true

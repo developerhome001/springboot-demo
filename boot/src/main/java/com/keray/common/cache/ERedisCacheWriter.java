@@ -51,7 +51,10 @@ public class ERedisCacheWriter implements RedisCacheWriter {
 
         execute(name, connection -> {
             if (shouldExpireWithin(name, ttl)) {
-                connection.set(key, value, Expiration.from(getTtl(name, ttl), TimeUnit.MILLISECONDS), RedisStringCommands.SetOption.upsert());
+                var t = getTtl(name, ttl);
+                if (t > 0)
+                    connection.set(key, value, Expiration.from(t, TimeUnit.MILLISECONDS), RedisStringCommands.SetOption.upsert());
+                else connection.set(key, value);
             } else {
                 connection.set(key, value);
             }
@@ -256,8 +259,13 @@ public class ERedisCacheWriter implements RedisCacheWriter {
     }
 
     private long getTtl(String name, Duration ttl) {
+        var t = KerayCacheAspectSupport.TTL.get();
+        if (t != null) return t;
         if (config.get(name) == null) return ttl.toMillis();
-        return config.get(name).getTimeToLiveSeconds() * 1000;
+        var lt = config.get(name).getTimeToLiveSeconds() * 1000;
+        // 1亿秒时算永久缓存
+        if (lt == 1000) return -1;
+        return lt;
     }
 
     @Override

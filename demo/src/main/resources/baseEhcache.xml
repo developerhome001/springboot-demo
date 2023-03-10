@@ -24,45 +24,70 @@
         在有效的600秒(10分钟)内，如果连续120秒(2分钟)未访问缓存，则缓存失效。
         就算有访问，也只会存活600秒。
      -->
-    <defaultCache maxElementsInMemory="10000" eternal="false"
-                  timeToIdleSeconds="600" timeToLiveSeconds="600" overflowToDisk="false"/>
 
-    <!--  大对象，实时性高，更新率高，10分钟存活时间  开启磁盘-->
-    <cache name="cache:big_up_up" maxElementsInMemory="1000" eternal="false"
-           timeToIdleSeconds="60"
-           timeToLiveSeconds="600" overflowToDisk="false"/>
+    <!--  大对象，实时性高，更新率高，10分钟存活时间 -->
+    <cache name="cache:big_up_up" timeToLiveSeconds="600"/>
 
-    <!--  大对象，实时性高，更新率低 1天存活时间,1小时有效期 开启磁盘-->
-    <cache name="cache:big_up_low" maxElementsInMemory="1000" eternal="false"
-           timeToIdleSeconds="3600" timeToLiveSeconds="86400" overflowToDisk="true"/>
+    <!--  大对象，实时性高，更新率低 1小时有效期-->
+    <cache name="cache:big_up_low" timeToLiveSeconds="3600"/>
 
-    <!--  大对象，实时性低，更新率高 10天存活时间 开启磁盘-->
-    <cache name="cache:big_low_up" maxElementsInMemory="1000" eternal="false"
-           timeToIdleSeconds="600"
-           timeToLiveSeconds="864000" overflowToDisk="false"/>
+    <!--  大对象，实时性低，更新率高 1天存活时间 -->
+    <cache name="cache:big_low_up" timeToLiveSeconds="86400"/>
 
-    <!--  大对象，实时性低，更新率低 10天存活时间 开启磁盘-->
-    <cache name="cache:big_low_low" maxElementsInMemory="1000" eternal="false"
-           timeToIdleSeconds="600"
-           timeToLiveSeconds="864000" overflowToDisk="true"/>
+    <!--  大对象，实时性低，更新率低 10天存活时间-->
+    <cache name="cache:big_low_low" timeToLiveSeconds="864000"/>
 
 
-    <!--  小对象，实时性高，更新率高，10分钟存活时间，1分钟有效期  关闭磁盘-->
-    <cache name="cache:small_up_up" maxElementsInMemory="10000" eternal="false"
-           timeToIdleSeconds="60" timeToLiveSeconds="600" overflowToDisk="false"/>
+    <!--  小对象，实时性高，更新率高，1分钟有效期  -->
+    <cache name="cache:small_up_up" timeToLiveSeconds="60"/>
 
-    <!--  小对象，实时性高，更新率低 1天存活时间,10分钟有效期 关闭磁盘-->
-    <cache name="cache:small_up_low" maxElementsInMemory="10000" eternal="false"
-           timeToIdleSeconds="60" timeToLiveSeconds="86400" overflowToDisk="true"/>
+    <!--  小对象，实时性高，更新率低 10分钟有效期 -->
+    <cache name="cache:small_up_low" timeToLiveSeconds="600"/>
 
-    <!--  小对象，实时性低，更新率高 5天存活时间 关闭磁盘-->
-    <cache name="cache:small_low_up" maxElementsInMemory="10000" eternal="false"
-           timeToIdleSeconds="600"
-           timeToLiveSeconds="432000" overflowToDisk="false"/>
+    <!--  小对象，实时性低，更新率高 1天存活时间 -->
+    <cache name="cache:small_low_up" timeToLiveSeconds="86400"/>
 
-    <!--  小对象，实时性低，更新率低 10天存活时间 关闭磁盘-->
-    <cache name="cache:small_low_low" maxElementsInMemory="10000" eternal="false"
-           timeToIdleSeconds="600"
-           timeToLiveSeconds="864000" overflowToDisk="true"/>
+    <!--  小对象，实时性低，更新率低 5天存活时间 -->
+    <cache name="cache:small_low_low" timeToLiveSeconds="43200"/>
+
+
+    <!--  10秒分钟  -->
+    <cache name="s10" timeToLiveSeconds="10"/>
+
+    <!--  30秒分钟  -->
+    <cache name="s30" timeToLiveSeconds="30"/>
+
+    <!--  1分钟  -->
+    <cache name="m1" timeToLiveSeconds="60"/>
+
+    <!--  10分钟  -->
+    <cache name="m10" timeToLiveSeconds="600"/>
+
+    <!--  30分钟  -->
+    <cache name="m30" timeToLiveSeconds="1800"/>
+
+    <!-- 1小时-->
+    <cache name="h1" timeToLiveSeconds="3600"/>
+
+    <!-- 10小时-->
+    <cache name="h10" timeToLiveSeconds="36000"/>
+
+    <!-- 1天-->
+    <cache name="d1" timeToLiveSeconds="86400"/>
+
+    <!-- 5天-->
+    <cache name="d5" timeToLiveSeconds="432000"/>
+
+    <!-- 10天-->
+    <cache name="d10" timeToLiveSeconds="864000"/>
+
+    <!-- 30天-->
+    <cache name="d30" timeToLiveSeconds="2592000"/>
+
+    <!-- 1年-->
+    <cache name="y1" timeToLiveSeconds="31104000"/>
+
+    <!-- 永久 1特殊秒 -->
+    <cache name="ALWAYS" timeToLiveSeconds="1"/>
 
 </ehcache>
