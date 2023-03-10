@@ -66,7 +66,7 @@ public final class CacheConstants {
     public static final String D10 = "d10";
     public static final String D30 = "d30";
     public static final String Y1 = "y1";
-    public static final String ALWAYS = "s10";
+    public static final String ALWAYS = "ALWAYS";
 
 
 }
