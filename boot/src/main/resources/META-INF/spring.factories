@@ -1,5 +1,4 @@
 # Auto Configure
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.keray.common.CommonAutoStart,\
-  com.keray.common.diamond.DiamondAuto,\
-  com.keray.common.diamond.DiamondManger
+  com.keray.common.diamond.DiamondBeanPostProcessor,\
+  com.keray.common.CommonAutoStart

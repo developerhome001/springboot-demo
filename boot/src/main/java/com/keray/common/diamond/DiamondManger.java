@@ -9,15 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.util.ProxyUtils;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +22,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Configuration
 @Order(Integer.MIN_VALUE)
-public class DiamondManger  implements BeanPostProcessor{
+public class DiamondManger implements BeanPostProcessor {
+
+
+    private final static Map<String, Node> FIELD_MAP = new HashMap<>(32);
+
+    private final static Map<Class, ValueHandler> HANDLER_CACHE = new ConcurrentHashMap<>(32);
 
     private final Store store;
     private final DiamondHandler handler;
@@ -54,19 +55,6 @@ public class DiamondManger  implements BeanPostProcessor{
         }
         return BeanPostProcessor.super.postProcessBeforeInitialization(bean, beanName);
     }
-
-
-    @AllArgsConstructor
-    @NoArgsConstructor
-    protected static class Node {
-        Object bean;
-
-        Field field;
-    }
-
-    private final static Map<String, Node> FIELD_MAP = new HashMap<>(32);
-
-    private final static Map<Class, ValueHandler> HANDLER_CACHE = new ConcurrentHashMap<>(32);
 
 
     @SneakyThrows
@@ -130,6 +118,14 @@ public class DiamondManger  implements BeanPostProcessor{
             var setMethod = clazz.getMethod(setName, field.getType());
             setMethod.invoke(node.bean, handlerObj.decode(value, field.getType()));
         }
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    protected static class Node {
+        Object bean;
+
+        Field field;
     }
 
 }

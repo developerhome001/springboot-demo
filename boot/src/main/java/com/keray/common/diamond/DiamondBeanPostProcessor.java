@@ -2,17 +2,21 @@ package com.keray.common.diamond;
 
 import lombok.SneakyThrows;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 
 import java.util.LinkedList;
 
-@Configuration
-public class DiamondAuto implements BeanPostProcessor {
-
+public class DiamondBeanPostProcessor implements BeanPostProcessor, FactoryBean<DiamondBeanPostProcessor> {
     private DiamondManger manger;
 
     private final LinkedList<Object> beans = new LinkedList<>();
+
+
+    public DiamondBeanPostProcessor(ConfigurableBeanFactory configurableBeanFactory) {
+        configurableBeanFactory.addBeanPostProcessor(this);
+    }
 
     @SneakyThrows
     @Override
@@ -30,4 +34,13 @@ public class DiamondAuto implements BeanPostProcessor {
         return BeanPostProcessor.super.postProcessBeforeInitialization(bean, beanName);
     }
 
+    @Override
+    public DiamondBeanPostProcessor getObject() throws Exception {
+        return this;
+    }
+
+    @Override
+    public Class<?> getObjectType() {
+        return DiamondBeanPostProcessor.class;
+    }
 }
