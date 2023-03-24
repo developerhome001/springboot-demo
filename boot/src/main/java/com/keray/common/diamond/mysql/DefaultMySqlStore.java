@@ -5,6 +5,7 @@ import com.keray.common.diamond.Store;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.Resource;
@@ -13,11 +14,11 @@ import javax.annotation.Resource;
 @Configuration
 @ConditionalOnClass(MybatisPlusProperties.class)
 @Slf4j
-public class MySqlStore implements Store {
+public class DefaultMySqlStore implements Store {
     @Resource
     private DiamondStoreMapper repository;
 
-    public MySqlStore() {
+    public DefaultMySqlStore() {
         log.info("diamond MySQL存储器");
     }
 

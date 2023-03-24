@@ -25,19 +25,36 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Configuration
-@ConditionalOnBean({Store.class, DiamondHandler.class})
 @Order(Integer.MIN_VALUE)
-public class DiamondManger {
+public class DiamondManger  implements BeanPostProcessor{
 
-    @Resource
-    private Store store;
+    private final Store store;
+    private final DiamondHandler handler;
 
-    @Resource
-    private DiamondHandler handler;
+    private boolean hadOK = false;
 
-    public DiamondManger() {
-        log.info("动态配置管理开启");
+    public DiamondManger(ObjectProvider<Store> store, ObjectProvider<DiamondHandler> handler) {
+        this.store = store.getIfAvailable();
+        this.handler = handler.getIfAvailable();
     }
+
+    @PostConstruct
+    public void init() {
+        if (store != null && handler != null) {
+            log.info("动态配置管理开启");
+        }
+    }
+
+    @SneakyThrows
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        hadOK = true;
+        if (store != null && handler != null) {
+            process(bean);
+        }
+        return BeanPostProcessor.super.postProcessBeforeInitialization(bean, beanName);
+    }
+
 
     @AllArgsConstructor
     @NoArgsConstructor
@@ -54,6 +71,7 @@ public class DiamondManger {
 
     @SneakyThrows
     public Object handler(Object bean) {
+        if (hadOK) return bean;
         if (store != null && handler != null) {
             process(bean);
         }
