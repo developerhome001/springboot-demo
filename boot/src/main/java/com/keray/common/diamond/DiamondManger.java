@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -24,15 +25,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Configuration
+@ConditionalOnBean({Store.class, DiamondHandler.class})
 @Order(Integer.MIN_VALUE)
-public class DiamondManger implements BeanPostProcessor {
+public class DiamondManger {
 
-    private final Store store;
-    private final DiamondHandler handler;
+    @Resource
+    private Store store;
 
-    public DiamondManger(ObjectProvider<Store> store, ObjectProvider<DiamondHandler> handler) {
-        this.store = store.getIfAvailable();
-        this.handler = handler.getIfAvailable();
+    @Resource
+    private DiamondHandler handler;
+
+    public DiamondManger() {
+        log.info("动态配置管理开启");
     }
 
     @AllArgsConstructor
@@ -48,20 +52,12 @@ public class DiamondManger implements BeanPostProcessor {
     private final static Map<Class, ValueHandler> HANDLER_CACHE = new ConcurrentHashMap<>(32);
 
 
-    @PostConstruct
-    public void init() {
-        if (store != null && handler != null) {
-            log.info("动态配置管理开启");
-        }
-    }
-
     @SneakyThrows
-    @Override
-    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+    public Object handler(Object bean) {
         if (store != null && handler != null) {
             process(bean);
         }
-        return BeanPostProcessor.super.postProcessBeforeInitialization(bean, beanName);
+        return bean;
     }
 
     private void process(Object bean) throws Exception {

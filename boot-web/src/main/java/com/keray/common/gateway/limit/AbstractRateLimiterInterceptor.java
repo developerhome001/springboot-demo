@@ -33,7 +33,6 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
     private RateLimiterBean memoryRateLimiterBean;
 
     @Resource
-    @Lazy
     @Getter
     private QpsConfig qpsConfig;
 
