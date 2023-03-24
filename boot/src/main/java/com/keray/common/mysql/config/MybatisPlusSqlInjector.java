@@ -25,10 +25,11 @@ import com.keray.common.entity.impl.BSDEntity;
 import com.keray.common.mysql.handler.LocalDateTimeTypeHandler;
 import com.keray.common.mysql.handler.LocalDateTypeHandler;
 import com.keray.common.mysql.handler.LocalTimeTypeHandler;
-import com.keray.common.service.mapper.MybatisPlusCacheMapper;
 import com.keray.common.mysql.handler.StringEncryptionHandler;
+import com.keray.common.service.mapper.MybatisPlusCacheMapper;
 import com.keray.common.utils.UUIDUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.scripting.defaults.RawSqlSource;
@@ -38,8 +39,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -66,7 +65,7 @@ import java.util.function.Consumer;
 @Slf4j
 @ConditionalOnClass(MybatisPlusProperties.class)
 @MapperScan("com.keray.common.service.mapper")
-public class MybatisPlusSqlInjector implements BeanPostProcessor {
+public class MybatisPlusSqlInjector {
 
     private final IContext userContext;
 
@@ -92,6 +91,17 @@ public class MybatisPlusSqlInjector implements BeanPostProcessor {
     @Primary
     public ISqlInjector sqlInjector() {
         return new AbstractSqlInjector() {
+            private boolean base = false;
+
+            @Override
+            public void inspectInject(MapperBuilderAssistant builderAssistant, Class<?> mapperClass) {
+                if (!base) {
+                    mybatisPlusProperties.getConfiguration().addMapper(MybatisPlusCacheMapper.class);
+                    base = true;
+                }
+                super.inspectInject(builderAssistant, mapperClass);
+            }
+
             @Override
             public List<AbstractMethod> getMethodList(Class<?> mapperClass, TableInfo tableInfo) {
                 List<AbstractMethod> result = new LinkedList<>(
@@ -140,15 +150,6 @@ public class MybatisPlusSqlInjector implements BeanPostProcessor {
         interceptor.addInnerInterceptor(paginationInnerInterceptor);
         interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor());
         return interceptor;
-    }
-
-
-    @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if ("sqlSessionFactory".equals(beanName)) {
-            mybatisPlusProperties.getConfiguration().addMapper(MybatisPlusCacheMapper.class);
-        }
-        return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);
     }
 
     @Pointcut("@annotation(com.keray.common.mysql.BaseDbUpdateModel)")
