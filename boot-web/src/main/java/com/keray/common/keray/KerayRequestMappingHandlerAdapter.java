@@ -9,16 +9,17 @@ import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHan
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 public class KerayRequestMappingHandlerAdapter extends RequestMappingHandlerAdapter {
 
     private final ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory;
 
-    private final List<ServletInvocableHandlerPipeline> handlers;
+    private final Set<ServletInvocableHandlerPipeline> handlers;
 
     private volatile ServletInvocableHandlerPipeline[] cache = null;
 
-    public KerayRequestMappingHandlerAdapter(ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory, List<ServletInvocableHandlerPipeline> handlers) {
+    public KerayRequestMappingHandlerAdapter(ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory, Set<ServletInvocableHandlerPipeline> handlers) {
         this.servletInvocableHandlerMethodFactory = servletInvocableHandlerMethodFactory;
         this.handlers = handlers;
     }
@@ -31,8 +32,9 @@ public class KerayRequestMappingHandlerAdapter extends RequestMappingHandlerAdap
     @Override
     protected ServletInvocableHandlerMethod createInvocableHandlerMethod(HandlerMethod handlerMethod) {
         if (cache == null) {
-            handlers.sort(Comparator.comparing(ServletInvocableHandlerPipeline::getOrder));
-            cache = handlers.toArray(new ServletInvocableHandlerPipeline[0]);
+            cache = handlers.stream()
+                    .sorted(Comparator.comparing(ServletInvocableHandlerPipeline::getOrder))
+                    .toArray(ServletInvocableHandlerPipeline[]::new);
         }
         return servletInvocableHandlerMethodFactory.create(handlerMethod, cache);
     }

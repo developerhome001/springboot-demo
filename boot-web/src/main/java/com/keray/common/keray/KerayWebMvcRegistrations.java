@@ -4,6 +4,7 @@ import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import com.keray.common.keray.factory.ServletInvocableHandlerMethodFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcRegistrations;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -11,23 +12,22 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Configuration(proxyBeanMethods = false)
 @Primary
 public class KerayWebMvcRegistrations implements WebMvcRegistrations, BeanPostProcessor {
 
 
-    private final List<ServletInvocableHandlerPipeline> handlers = Collections.synchronizedList(new ArrayList<>(8));
+    private final Set<ServletInvocableHandlerPipeline> handlers = Collections.synchronizedSet(new LinkedHashSet<>());
 
     @Resource
     private ServletInvocableHandlerMethodFactory servletInvocableHandlerMethodFactory;
 
 
-    public KerayWebMvcRegistrations(ApplicationContext context) {
+    public KerayWebMvcRegistrations(ApplicationContext context, ConfigurableBeanFactory configurableBeanFactory) {
         handlers.addAll(context.getBeansOfType(ServletInvocableHandlerPipeline.class).values());
+        configurableBeanFactory.addBeanPostProcessor(this);
     }
 
     @Override
