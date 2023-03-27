@@ -12,21 +12,16 @@ import com.baomidou.mybatisplus.core.toolkit.sql.SqlScriptUtils;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.BlockAttackInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import com.keray.common.IContext;
 import com.keray.common.entity.IBSMapper;
 import com.keray.common.entity.IBaseMapper;
-import com.keray.common.service.mapper.MybatisPlusCacheMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.scripting.defaults.RawSqlSource;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.aspectj.lang.annotation.Aspect;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -47,34 +42,13 @@ import java.util.Map;
 @MapperScan("com.keray.common.service.mapper")
 public class MybatisPlusSqlInjector {
 
-    private final IContext userContext;
-
-    private final ApplicationContext applicationContext;
-
-
-    public MybatisPlusSqlInjector(IContext userContext, ApplicationContext applicationContext) {
-        this.userContext = userContext;
-        this.applicationContext = applicationContext;
-    }
 
     @Bean
     @ConditionalOnMissingBean(ISqlInjector.class)
     @Primary
     public ISqlInjector sqlInjector() {
+        log.info("自定义mybatis-plus方法加载器");
         return new AbstractSqlInjector() {
-            private boolean base = false;
-
-            @Override
-            public void inspectInject(MapperBuilderAssistant builderAssistant, Class<?> mapperClass) {
-                if (!base) {
-                    base = true;
-                    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
-                    var configuration = sqlSessionFactory.getConfiguration();
-                    configuration.addMapper(MybatisPlusCacheMapper.class);
-                }
-                super.inspectInject(builderAssistant, mapperClass);
-            }
-
             @Override
             public List<AbstractMethod> getMethodList(Class<?> mapperClass, TableInfo tableInfo) {
                 List<AbstractMethod> result = new LinkedList<>(
