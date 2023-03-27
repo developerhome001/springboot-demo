@@ -58,6 +58,8 @@ mybatis-plus:
     jdbc-type-for-null: 'null'
 
 keray:
+  schedule:
+    open: false
   api:
     json:
       open: true

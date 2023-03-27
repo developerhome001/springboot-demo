@@ -66,6 +66,9 @@ public class SysScheduleService implements BSService<SysScheduleModel, Long> {
     @Getter
     @Setter
     private String namespace = "default";
+    @Getter
+    @Setter
+    private boolean open = true;
 
     private final ThreadLocal<Boolean> scheduleExecFlag = new ThreadLocal<>();
 
@@ -83,6 +86,10 @@ public class SysScheduleService implements BSService<SysScheduleModel, Long> {
     @Override
     public IBSMapper<SysScheduleModel, Long> getMapper() {
         return sysScheduleMapper;
+    }
+
+    public SysScheduleService() {
+        log.info("keray定时任务打开");
     }
 
     public SysScheduleModel updateScheduleStatus(Long id, ScheduleStatus status) {

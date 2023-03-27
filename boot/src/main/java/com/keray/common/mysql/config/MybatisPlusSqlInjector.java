@@ -1,15 +1,8 @@
 package com.keray.common.mysql.config;
 
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.DbType;
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.Update;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.enums.SqlMethod;
-import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
 import com.baomidou.mybatisplus.core.injector.AbstractMethod;
 import com.baomidou.mybatisplus.core.injector.AbstractSqlInjector;
 import com.baomidou.mybatisplus.core.injector.ISqlInjector;
@@ -20,25 +13,16 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.BlockAttackInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.keray.common.IContext;
-import com.keray.common.entity.*;
-import com.keray.common.entity.impl.BSDEntity;
-import com.keray.common.mysql.handler.LocalDateTimeTypeHandler;
-import com.keray.common.mysql.handler.LocalDateTypeHandler;
-import com.keray.common.mysql.handler.LocalTimeTypeHandler;
-import com.keray.common.mysql.handler.StringEncryptionHandler;
+import com.keray.common.entity.IBSMapper;
+import com.keray.common.entity.IBaseMapper;
 import com.keray.common.service.mapper.MybatisPlusCacheMapper;
-import com.keray.common.utils.UUIDUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.scripting.defaults.RawSqlSource;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.type.JdbcType;
-import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -47,14 +31,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * @author by keray
@@ -90,11 +70,6 @@ public class MybatisPlusSqlInjector {
                     base = true;
                     SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
                     var configuration = sqlSessionFactory.getConfiguration();
-                    configuration.getTypeHandlerRegistry().register(LocalDateTime.class, LocalDateTimeTypeHandler.class);
-                    configuration.getTypeHandlerRegistry().register(LocalDate.class, LocalDateTypeHandler.class);
-                    configuration.getTypeHandlerRegistry().register(LocalTime.class, LocalTimeTypeHandler.class);
-                    configuration.getTypeHandlerRegistry().register(String.class, JdbcType.VARCHAR, StringEncryptionHandler.class);
-                    configuration.getTypeHandlerRegistry().register(String.class, StringEncryptionHandler.class);
                     configuration.addMapper(MybatisPlusCacheMapper.class);
                 }
                 super.inspectInject(builderAssistant, mapperClass);
@@ -148,141 +123,6 @@ public class MybatisPlusSqlInjector {
         interceptor.addInnerInterceptor(paginationInnerInterceptor);
         interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor());
         return interceptor;
-    }
-
-    @Pointcut("@annotation(com.keray.common.mysql.BaseDbUpdateModel)")
-    public void updateById() {
-    }
-
-    @Pointcut("@annotation(com.keray.common.mysql.BaseDbUpdateWrapper)")
-    public void update() {
-    }
-
-    @Pointcut("@annotation(com.keray.common.mysql.BaseDbInsert)")
-    public void insert() {
-    }
-
-    @Before("updateById()")
-    public void beforeUpdateById(JoinPoint joinPoint) {
-        Object[] args = joinPoint.getArgs();
-        IBSDEntity model = (IBSDEntity) args[0];
-        if (model instanceof IBSDUEntity) {
-            IBSDUEntity entity = (IBSDUEntity) model;
-            if (StrUtil.isBlank(entity.getModifyBy())) {
-                entity.setModifyBy(userContext.currentUserId());
-            }
-        }
-        var context = MybatisPlusContext.context();
-        if (context == null || !context.isNoUpdateModifyTime()) {
-            model.setModifyTime(LocalDateTime.now());
-        }
-    }
-
-    @Before("update()")
-    public void beforeUpdate(JoinPoint joinPoint) {
-        Object[] args = joinPoint.getArgs();
-        IBSDEntity model = null;
-        Update update;
-        if (args.length == 1) {
-            update = (Update) args[0];
-        } else {
-            model = (IBSDEntity) args[0];
-            update = (Update) args[1];
-        }
-        var context = MybatisPlusContext.context();
-        var setModifyTime = context == null || !context.isNoUpdateModifyTime();
-        if (model != null) {
-            model.setModifyTime(setModifyTime ? LocalDateTime.now() : null);
-            if (model instanceof IBSDUEntity) {
-                IBSDUEntity entity = (IBSDUEntity) model;
-                if (StrUtil.isBlank(entity.getModifyBy())) {
-                    entity.setModifyBy(userContext.currentUserId());
-                }
-                entity.setCreatedBy(null);
-            }
-        }
-        if (update != null && model == null) {
-            if (joinPoint.getTarget() instanceof IBSDUMapper) {
-                if (update instanceof LambdaUpdateWrapper<?>) {
-                    LambdaUpdateWrapper<IBSDUEntity> updateWrapper = (LambdaUpdateWrapper) update;
-                    updateWrapper.set(setModifyTime, IBSDUEntity::getModifyTime, LocalDateTime.now())
-                            .set(IBSDUEntity::getModifyBy, userContext.currentUserId());
-                } else if (update instanceof UpdateWrapper) {
-                    try {
-                        ((UpdateWrapper<IBSDUEntity>) update).lambda()
-                                .set(setModifyTime, IBSDUEntity::getModifyTime, LocalDateTime.now())
-                                .set(IBSDUEntity::getModifyBy, userContext.currentUserId());
-                    } catch (MybatisPlusException exception) {
-                        ((UpdateWrapper<IBSDUEntity>) update)
-                                .set(setModifyTime, "modify_time", LocalDateTime.now())
-                                .set("modify_by", userContext.currentUserId());
-                    }
-                }
-            } else if (joinPoint.getTarget() instanceof IBSDMapper) {
-                if (update instanceof LambdaUpdateWrapper) {
-                    LambdaUpdateWrapper<IBSDEntity> updateWrapper = (LambdaUpdateWrapper) update;
-                    updateWrapper.set(setModifyTime, IBSDEntity::getModifyTime, LocalDateTime.now());
-                } else if (update instanceof UpdateWrapper) {
-                    try {
-                        ((UpdateWrapper<IBSDEntity>) update).lambda()
-                                .set(setModifyTime, IBSDEntity::getModifyTime, LocalDateTime.now());
-                    } catch (MybatisPlusException exception) {
-                        ((UpdateWrapper<BSDEntity>) update)
-                                .set(setModifyTime, "modify_time", LocalDateTime.now());
-                    }
-                }
-            }
-        }
-    }
-
-    @Before("insert()")
-    public void insert(JoinPoint joinPoint) {
-        Object[] args = joinPoint.getArgs();
-        Object data = args[0];
-        Consumer<IBSEntity> work = (model) -> {
-            IdType idType = model.idType();
-            if (idType != IdType.AUTO) {
-                if (model.idClazz() == String.class) {
-                    if (ObjectUtil.isEmpty(model.getId())) {
-                        model.setId(UUIDUtil.generateUUIDByTimestamp());
-                    }
-                } else if (model.idClazz() == Long.class) {
-                    if (model.getId() == null) {
-                        model.setId(UUIDUtil.generateUUID());
-                    }
-                } else if (model.idClazz() == Integer.class) {
-                    if (model.getId() == null) {
-                        model.setId(UUIDUtil.generateUUID().intValue());
-                    }
-                }
-            }
-            if (model instanceof IBSDEntity bm) {
-                if (bm.getCreatedTime() == null) {
-                    bm.setCreatedTime(LocalDateTime.now());
-                }
-                if (bm.getModifyTime() == null) {
-                    bm.setModifyTime(bm.getCreatedTime());
-                }
-            }
-            if (model instanceof IBSDUEntity im) {
-                if (StrUtil.isBlank(im.getModifyBy())) {
-                    im.setModifyBy(userContext.currentUserId());
-                }
-                if (StrUtil.isBlank(im.getCreatedBy())) {
-                    im.setCreatedBy(userContext.currentUserId() == null ? "database" : userContext.currentUserId());
-                }
-            }
-        };
-        if (data instanceof IBSEntity model) {
-            work.accept(model);
-        } else if (data instanceof List<?> list) {
-            for (var item : list) {
-                if (item instanceof IBSEntity model) {
-                    work.accept(model);
-                }
-            }
-        }
-
     }
 
     private static final class ISelectById extends BaseAbstractLogicMethod {

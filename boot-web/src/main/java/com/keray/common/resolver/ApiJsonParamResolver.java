@@ -53,6 +53,9 @@ public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor imp
     @Setter
     @Getter
     private Boolean globalSwitch = true;
+    @Setter
+    @Getter
+    private Boolean open = true;
 
     @Resource(name = "kObjectMapper")
     private ObjectMapper objectMapper;

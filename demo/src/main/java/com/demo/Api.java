@@ -1,5 +1,8 @@
 package com.demo;
 
+import com.demo.mapper.TestModelMapper;
+import com.demo.model.TestModel;
+import com.keray.common.Wrappers;
 import com.keray.common.annotation.ApiResult;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.cache.CacheConstants;
@@ -30,6 +33,9 @@ public class Api {
     @Resource
     private RedisTemplate persistenceRedisTemplate;
 
+    @Resource
+    private TestModelMapper testModelMapper;
+
 
     @ApiResult
     @GetMapping("/test")
@@ -50,5 +56,31 @@ public class Api {
 //        }
 //        throw new BizRuntimeException("直接抛出异常");
         return 123;
+    }
+
+    @GetMapping("/test1")
+    public void test1() {
+        var m = new TestModel();
+        m.setName("test-1");
+        m.setCode("test-1");
+        testModelMapper.insert(m);
+    }
+
+    @GetMapping("/test2")
+    public void test2(String id) {
+        var m = new TestModel();
+        m.setId(id);
+        m.setName("test-2");
+        m.setCode("test-2");
+        testModelMapper.updateById(m);
+    }
+
+    @GetMapping("/test3")
+    public void test3() {
+        testModelMapper.update(null, Wrappers.<TestModel>lambdaUpdate()
+                .set(TestModel::getName, "test-3")
+                .set(TestModel::getCode, "test-2")
+                .eq(TestModel::getCode, "test-2")
+        );
     }
 }
