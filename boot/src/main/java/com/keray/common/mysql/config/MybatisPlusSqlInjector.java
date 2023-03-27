@@ -1,6 +1,7 @@
 package com.keray.common.mysql.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.enums.SqlMethod;
 import com.baomidou.mybatisplus.core.injector.AbstractMethod;
@@ -14,7 +15,10 @@ import com.baomidou.mybatisplus.extension.plugins.inner.BlockAttackInnerIntercep
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.keray.common.entity.IBSMapper;
 import com.keray.common.entity.IBaseMapper;
+import com.keray.common.mysql.config.core.MybatisMapperRegistry;
+import com.keray.common.service.mapper.MybatisPlusCacheMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.scripting.defaults.RawSqlSource;
@@ -40,8 +44,10 @@ import java.util.Map;
 @Slf4j
 @ConditionalOnClass(MybatisConfiguration.class)
 @MapperScan("com.keray.common.service.mapper")
-public class MybatisPlusSqlInjector {
+public class MybatisPlusSqlInjector implements ConfigurationCustomizer {
 
+
+    public MybatisConfiguration mybatisConfiguration;
 
     @Bean
     @ConditionalOnMissingBean(ISqlInjector.class)
@@ -49,6 +55,18 @@ public class MybatisPlusSqlInjector {
     public ISqlInjector sqlInjector() {
         log.info("自定义mybatis-plus方法加载器");
         return new AbstractSqlInjector() {
+
+            private boolean bean = true;
+
+            @Override
+            public void inspectInject(MapperBuilderAssistant builderAssistant, Class<?> mapperClass) {
+                if (bean) {
+                    bean = false;
+                    mybatisConfiguration.addMapper(MybatisPlusCacheMapper.class);
+                }
+                super.inspectInject(builderAssistant, mapperClass);
+            }
+
             @Override
             public List<AbstractMethod> getMethodList(Class<?> mapperClass, TableInfo tableInfo) {
                 List<AbstractMethod> result = new LinkedList<>(
@@ -97,6 +115,11 @@ public class MybatisPlusSqlInjector {
         interceptor.addInnerInterceptor(paginationInnerInterceptor);
         interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor());
         return interceptor;
+    }
+
+    @Override
+    public void customize(MybatisConfiguration configuration) {
+        mybatisConfiguration = configuration;
     }
 
     private static final class ISelectById extends BaseAbstractLogicMethod {
