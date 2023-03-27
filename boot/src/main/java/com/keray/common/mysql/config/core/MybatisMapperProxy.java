@@ -53,7 +53,7 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
     private final Class<T> mapperInterface;
     private final Map<Method, MapperMethodInvoker> methodCache;
 
-    private IContext userContext;
+    private static volatile IContext userContext;
 
     public MybatisMapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethodInvoker> methodCache) {
         this.sqlSession = sqlSession;
@@ -103,10 +103,10 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
 
 
     protected void modelProcess(Object proxy, Method method, Object[] args) {
-        if (userContext == null) {
-            synchronized (this) {
-                if (userContext == null) {
-                    userContext = SpringContextHolder.getBean(IContext.class);
+        if (MybatisMapperProxy.userContext == null) {
+            synchronized (MybatisMapperProxy.class) {
+                if (MybatisMapperProxy.userContext == null) {
+                    MybatisMapperProxy.userContext = SpringContextHolder.getBean(IContext.class);
                 }
             }
         }
