@@ -2,6 +2,7 @@ package com.keray.common;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -15,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @AutoConfigureOrder()
-public class SpringContextHolder implements ApplicationContextAware, DisposableBean {
+public class SpringContextHolder implements FactoryBean<SpringContextHolder> {
     private static ApplicationContext applicationContext = null;
 
     /**
@@ -23,6 +24,10 @@ public class SpringContextHolder implements ApplicationContextAware, DisposableB
      */
     public static ApplicationContext getApplicationContext() {
         return applicationContext;
+    }
+
+    public SpringContextHolder(ApplicationContext applicationContext) {
+        SpringContextHolder.applicationContext = applicationContext;
     }
 
     /**
@@ -40,19 +45,6 @@ public class SpringContextHolder implements ApplicationContextAware, DisposableB
     }
 
     /**
-     * 实现ApplicationContextAware接口, 注入Context到静态变量中.
-     */
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        log.debug("注入ApplicationContext到SpringContextHolder:{}", applicationContext);
-        if (SpringContextHolder.applicationContext != null) {
-            log.warn("SpringContextHolder中的ApplicationContext被覆盖, 原有ApplicationContext为:{}", SpringContextHolder.applicationContext);
-        }
-        //NOSONAR
-        SpringContextHolder.applicationContext = applicationContext;
-    }
-
-    /**
      * 获取配置文件配置项的值
      *
      * @param key 配置项key
@@ -61,11 +53,13 @@ public class SpringContextHolder implements ApplicationContextAware, DisposableB
         return getApplicationContext().getEnvironment().getProperty(key);
     }
 
-    /**
-     * 实现DisposableBean接口, 在Context关闭时清理静态变量.
-     */
     @Override
-    public void destroy() throws Exception {
+    public SpringContextHolder getObject() throws Exception {
+        return this;
+    }
 
+    @Override
+    public Class<?> getObjectType() {
+        return SpringContextHolder.class;
     }
 }

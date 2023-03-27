@@ -19,7 +19,7 @@
             <dependency>
                 <groupId>com.keray.spring</groupId>
                 <artifactId>dependencies</artifactId>
-                <version>1.2.2</version>
+               <version>1.2.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -35,11 +35,11 @@
             <artifactId>plugins</artifactId>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>com.baomidou</groupId>-->
-<!--            <artifactId>mybatis-plus-boot-starter</artifactId>-->
-<!--            <version>3.5.1</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.1</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
@@ -51,20 +51,20 @@
             <version>3.16.7</version>
         </dependency>
 
-        <!--        <dependency>-->
-<!--            <groupId>mysql</groupId>-->
-<!--            <artifactId>mysql-connector-java</artifactId>-->
-<!--            <scope>runtime</scope>-->
-<!--            <version>8.0.21</version>-->
-<!--            <optional>true</optional>-->
-<!--        </dependency>-->
+                <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <scope>runtime</scope>
+            <version>8.0.21</version>
+            <optional>true</optional>
+        </dependency>
 
 
-<!--        <dependency>-->
-<!--            <groupId>com.alibaba</groupId>-->
-<!--            <artifactId>druid-spring-boot-starter</artifactId>-->
-<!--            <version>1.2.11</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.2.11</version>
+        </dependency>
 
     </dependencies>
 

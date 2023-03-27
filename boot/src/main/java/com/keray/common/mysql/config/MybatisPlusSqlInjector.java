@@ -4,7 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.autoconfigure.MybatisPlusProperties;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.Update;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -33,6 +33,7 @@ import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.scripting.defaults.RawSqlSource;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.type.JdbcType;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -41,12 +42,11 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -63,27 +63,18 @@ import java.util.function.Consumer;
 @Configuration
 @Aspect
 @Slf4j
-@ConditionalOnClass(MybatisPlusProperties.class)
+@ConditionalOnClass(MybatisConfiguration.class)
 @MapperScan("com.keray.common.service.mapper")
 public class MybatisPlusSqlInjector {
 
     private final IContext userContext;
 
+    private final ApplicationContext applicationContext;
 
-    @Resource
-    private MybatisPlusProperties mybatisPlusProperties;
 
-    public MybatisPlusSqlInjector(IContext userContext) {
+    public MybatisPlusSqlInjector(IContext userContext, ApplicationContext applicationContext) {
         this.userContext = userContext;
-    }
-
-    @PostConstruct
-    public void init() {
-        mybatisPlusProperties.getConfiguration().getTypeHandlerRegistry().register(LocalDateTime.class, LocalDateTimeTypeHandler.class);
-        mybatisPlusProperties.getConfiguration().getTypeHandlerRegistry().register(LocalDate.class, LocalDateTypeHandler.class);
-        mybatisPlusProperties.getConfiguration().getTypeHandlerRegistry().register(LocalTime.class, LocalTimeTypeHandler.class);
-        mybatisPlusProperties.getConfiguration().getTypeHandlerRegistry().register(String.class, JdbcType.VARCHAR, StringEncryptionHandler.class);
-        mybatisPlusProperties.getConfiguration().getTypeHandlerRegistry().register(String.class, StringEncryptionHandler.class);
+        this.applicationContext = applicationContext;
     }
 
     @Bean
@@ -96,8 +87,15 @@ public class MybatisPlusSqlInjector {
             @Override
             public void inspectInject(MapperBuilderAssistant builderAssistant, Class<?> mapperClass) {
                 if (!base) {
-                    mybatisPlusProperties.getConfiguration().addMapper(MybatisPlusCacheMapper.class);
                     base = true;
+                    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+                    var configuration = sqlSessionFactory.getConfiguration();
+                    configuration.getTypeHandlerRegistry().register(LocalDateTime.class, LocalDateTimeTypeHandler.class);
+                    configuration.getTypeHandlerRegistry().register(LocalDate.class, LocalDateTypeHandler.class);
+                    configuration.getTypeHandlerRegistry().register(LocalTime.class, LocalTimeTypeHandler.class);
+                    configuration.getTypeHandlerRegistry().register(String.class, JdbcType.VARCHAR, StringEncryptionHandler.class);
+                    configuration.getTypeHandlerRegistry().register(String.class, StringEncryptionHandler.class);
+                    configuration.addMapper(MybatisPlusCacheMapper.class);
                 }
                 super.inspectInject(builderAssistant, mapperClass);
             }
