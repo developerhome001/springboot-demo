@@ -14,5 +14,10 @@ public @interface Diamond {
      */
     Class<? extends ValueHandler> handler() default DefaultValueHandler.class;
 
-    String key();
+    String value();
+
+    /**
+     * 默认值
+     */
+    String def() default "";
 }

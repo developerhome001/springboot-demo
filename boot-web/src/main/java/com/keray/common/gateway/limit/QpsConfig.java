@@ -27,7 +27,7 @@ public class QpsConfig {
      * ip限制数据
      */
     @Getter
-    @Diamond(key = "QpsConfig.data")
+    @Diamond("QpsConfig.data")
     private Map<String/*ip 支持ip表达式 支持单ip ip范围 ip段*/, Map<String/* 请求路径 *匹配所有接口 */, QpsData>> data = new HashMap<>();
 
 
@@ -35,7 +35,7 @@ public class QpsConfig {
      * url限制数据
      */
     @Getter
-    @Diamond(key = "QpsConfig.urlData")
+    @Diamond("QpsConfig.urlData")
     private Map<String/*url表达式*/, LinkedList<QpsData>> urlData = new HashMap<>();
 
     public synchronized void setData(String value) {
@@ -46,7 +46,7 @@ public class QpsConfig {
         Map<String, Map<String, QpsData>> data = new LinkedHashMap<>();
         var map = JSON.parseObject(value, LinkedHashMap.class);
         for (var k : map.keySet()) {
-            var item = (JSONObject)map.get(k);
+            var item = (JSONObject) map.get(k);
             Map<String, QpsData> m = new LinkedHashMap<>();
             for (var k1 : item.keySet()) {
                 m.put(k1, item.getObject(k1, QpsData.class));

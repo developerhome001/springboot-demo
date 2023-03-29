@@ -26,6 +26,7 @@ public class DiamondManger implements BeanPostProcessor {
 
 
     private final static Map<String, Node> FIELD_MAP = new HashMap<>(32);
+    private final static Map<String, Object> FIELD_DEF_MAP = new HashMap<>(32);
 
     private final static Map<Class, ValueHandler> HANDLER_CACHE = new ConcurrentHashMap<>(32);
 
@@ -72,7 +73,12 @@ public class DiamondManger implements BeanPostProcessor {
         for (var field : fields) {
             var ani = field.getAnnotation(Diamond.class);
             if (ani == null) continue;
-            var key = ani.key();
+            var key = ani.value();
+            // 获取默认值并保存默认值
+            {
+                field.setAccessible(true);
+                FIELD_DEF_MAP.put(key, field.get(bean));
+            }
             var value = store.getValue(key);
             FIELD_MAP.put(key, new Node(bean, field));
             log.warn("新增diamond字段 {}", key);
@@ -98,6 +104,15 @@ public class DiamondManger implements BeanPostProcessor {
         store.save(key, value);
         var field = node.field;
         var clazz = node.bean.getClass();
+        if (value == null) {
+            var def = FIELD_DEF_MAP.get(key);
+            // 如果有默认值 设置默认值
+            if (def != null) {
+                log.warn("diamond设置默认值 {}=>{}", key, def);
+                field.set(node.bean, def);
+                return;
+            }
+        }
         // 获取set方法
         var setName = StrUtil.upperFirstAndAddPre(StrUtil.toCamelCase(field.getName()), "set");
         try {

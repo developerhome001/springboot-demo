@@ -7,6 +7,9 @@ import com.keray.common.annotation.ApiResult;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.cache.CacheConstants;
 import com.keray.common.cache.CacheTime;
+import com.keray.common.diamond.Diamond;
+import com.keray.common.diamond.handler.DiamondHandler;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -36,6 +39,9 @@ public class Api {
     @Resource
     private TestModelMapper testModelMapper;
 
+    @Diamond("test")
+    private String test = "test";
+
 
     @ApiResult
     @GetMapping("/test")
@@ -58,12 +64,17 @@ public class Api {
         return 123;
     }
 
+    @Resource
+    private DiamondHandler diamondHandler;
+
     @GetMapping("/test1")
-    public void test1() {
-        var m = new TestModel();
-        m.setName("test-1");
-        m.setCode("test-1");
-        testModelMapper.insert(m);
+    public void test1(String value) {
+        diamondHandler.handler("test", value);
+    }
+
+    @GetMapping("/test11")
+    public String test11() {
+        return test;
     }
 
     @GetMapping("/test2")
@@ -82,5 +93,9 @@ public class Api {
                 .set(TestModel::getCode, "test-2")
                 .eq(TestModel::getCode, "test-2")
         );
+    }
+
+    public void setTest(String test) {
+        this.test = test;
     }
 }
