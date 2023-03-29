@@ -19,7 +19,7 @@
             <dependency>
                 <groupId>com.keray.spring</groupId>
                 <artifactId>dependencies</artifactId>
-               <version>1.2.5</version>
+                <version>1.2.6</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -50,7 +50,7 @@
             <version>3.16.7</version>
         </dependency>
 
-                <dependency>
+        <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <scope>runtime</scope>
