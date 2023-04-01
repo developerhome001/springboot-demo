@@ -6,6 +6,7 @@ import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.annotation.RateLimiterGroup;
 import com.keray.common.exception.QPSFailException;
 import com.keray.common.gateway.downgrade.ApiDowngradeServletInvocableHandlerPipeline;
+import com.keray.common.gateway.downgrade.Node;
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
 import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import lombok.extern.slf4j.Slf4j;
@@ -88,7 +89,7 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
             return callback.get();
         } finally {
             // 释放令牌
-            var node = (ApiDowngradeServletInvocableHandlerPipeline.Node) workContext.get(ApiDowngradeServletInvocableHandlerPipeline.CONTEXT_NODE);
+            var node = (Node) workContext.get(ApiDowngradeServletInvocableHandlerPipeline.CONTEXT_NODE);
             if (!releaseData.isEmpty() && (node == null || !node.isTimeout())) {
                 for (var d : releaseData)
                     rateLimiterInterceptor.release(d.getKey(), d, request, handlerMethod);

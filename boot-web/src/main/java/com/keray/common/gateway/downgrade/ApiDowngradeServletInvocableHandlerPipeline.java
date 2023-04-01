@@ -1,18 +1,13 @@
 package com.keray.common.gateway.downgrade;
 
 import cn.hutool.core.collection.CollUtil;
-import com.keray.common.*;
-import com.keray.common.exception.BizRuntimeException;
+import com.keray.common.CommonResultCode;
+import com.keray.common.IContext;
+import com.keray.common.Result;
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
 import com.keray.common.handler.ServletInvocableHandlerPipeline;
 import com.keray.common.keray.KerayServletInvocableHandlerMethod;
-import com.keray.common.threadpool.MemorySafeLinkedBlockingQueue;
-import com.keray.common.threadpool.SysThreadPool;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.connector.Request;
-import org.apache.catalina.connector.Response;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +22,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
@@ -66,7 +63,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
     /**
      * 链表头部
      */
-    private final Node header = new Node();
+    private final Node header = new Node(0, null, null, null, null, null, null, null);
 
     /**
      * 链表尾部
@@ -95,9 +92,9 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
                 }
                 var time = System.currentTimeMillis();
                 Node before = header;
-                for (var node = header.next; node != null; node = node.next) {
-                    var timeout = node.ani.timeout();
-                    if (time - node.time > timeout) {
+                for (var node = header.getNext(); node != null; node = node.getNext()) {
+                    var timeout = node.getAni().timeout();
+                    if (time - node.getTime() > timeout) {
                         // 已经超时
                         try {
                             var n = remove(before, node);
@@ -106,6 +103,12 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
                         }
                         // 移除节点后，before不变 还是以前的before
                         // 移除节点后还需要将当前遍历的node设置为before  在node = node.next才能遍历到下一个节点
+                        node = before;
+                        continue;
+                    }
+                    // 如果接口已经提前完成了  移除节点
+                    if (node.isFinish()) {
+                        remove(before, node);
                         node = before;
                         continue;
                     }
@@ -149,21 +152,13 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
         for (var handler : apiDowngradeHandlers) {
             if (!handler.handler(ani)) return callback.get();
         }
-        var node = new Node();
-        node.time = System.currentTimeMillis();
-        node.handlerMethod = handlerMethod;
-        node.args = args;
-        node.ani = ani;
-        node.request = request;
-        node.thread = Thread.currentThread();
-        node.context = context.export();
-        node.workContext = workContext;
+        var node = new Node(System.currentTimeMillis(), ani, request, args, handlerMethod, Thread.currentThread(), context.export(), workContext);
         put(node);
         workContext.put(HOOKS_KEY, new LinkedList<>());
         workContext.put(CONTEXT_NODE, node);
         Result result = (Result) callback.get();
-        node.finish = true;
-        if (node.timeout) {
+        node.setFinish(true);
+        if (node.isTimeout()) {
             // 超时了直接将code设置为超时code 并将result修改为fail便于apilog记录日志
             if (result instanceof Result.SuccessResult<?> sr) {
                 return Result.fail(sr.getData(), CommonResultCode.timeoutOk.getCode(), CommonResultCode.timeoutOk.getMessage(), null);
@@ -199,26 +194,27 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
      */
     private void requestTimeout(Node node) {
         // 如果请求已经正常完成 直接返回
-        if (node.finish) return;
+        if (node.isFinish()) return;
         // 设置当前请求超时
-        node.timeout = true;
+        node.setTimeout(true);
         // 直接给socket写入降级数据
-        var handler = node.handlerMethod;
+        var handler = node.getHandlerMethod();
         if (handler instanceof KerayServletInvocableHandlerMethod kerayServletInvocableHandlerMethod) {
             try {
-                context.importConf(node.context);
+                context.importConf(node.getContext());
                 // 读取降级的数据
-                var returnData = returnData(node.ani, Result.fail(CommonResultCode.timeoutOk), node.request, node.args, node.handlerMethod, CommonResultCode.timeoutOk.getCode());
+                var returnData = returnData(node.getAni(), Result.fail(CommonResultCode.timeoutOk), node.getRequest(),
+                        node.getArgs(), node.getHandlerMethod(), CommonResultCode.timeoutOk.getCode());
                 kerayServletInvocableHandlerMethod.breakpointReturn(returnData);
-                var res = node.request.getNativeResponse(ServletResponse.class);
+                var res = node.getRequest().getNativeResponse(ServletResponse.class);
                 // 直接关闭socket
                 if (res != null) res.getOutputStream().close();
             } catch (Exception e) {
                 log.error("接口降级失败", e);
                 try {
-                    HttpServletResponse response = node.request.getNativeResponse(HttpServletResponse.class);
+                    HttpServletResponse response = node.getRequest().getNativeResponse(HttpServletResponse.class);
                     if (response == null) {
-                        var r = node.request.getNativeResponse(ServletResponse.class);
+                        var r = node.getRequest().getNativeResponse(ServletResponse.class);
                         if (r != null)
                             r.getOutputStream().close();
                         return;
@@ -235,11 +231,11 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
                 // 如果原执行流程比上面的socket先写入会导致结果不准确，如果同时写入会导致异常
                 // 所以必须要保证上面的socket写入完成后执行原流程中断
                 // 中断原先的执行线程之前执行管道添加的勾子函数
-                var hooks = (List<Runnable>) node.workContext.get(HOOKS_KEY);
+                var hooks = (List<Runnable>) node.getWorkContext().get(HOOKS_KEY);
                 if (CollUtil.isNotEmpty(hooks)) {
                     for (var hook : hooks) hook.run();
                 }
-                node.thread.interrupt();
+                node.getThread().interrupt();
             }
         }
     }
@@ -282,7 +278,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
      */
     private void put(Node node) {
         synchronized (clock) {
-            tail.next = node;
+            tail.setNext(node);
             tail = node;
         }
         countDownLatch.add();
@@ -298,60 +294,12 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
     private Node remove(Node before, Node node) {
         countDownLatch.countDown();
         synchronized (clock) {
-            before.next = node.next;
-            node.next = null;
+            before.setNext(node.getNext());
+            node.setNext(null);
             // 如果node本身是tail  需要将before设置为tail
-            if (before.next == null) tail = before;
+            if (before.getNext() == null) tail = before;
         }
         return node;
-    }
-
-
-    /**
-     * 监听对象
-     */
-    @Getter
-    @Setter
-    public static class Node {
-        private final Object lock = new Object();
-        private Node next;
-
-        /**
-         * 计时时间起点
-         */
-        private long time;
-
-        /**
-         * 注解
-         */
-        private ApiDowngrade ani;
-
-        private NativeWebRequest request;
-
-        private Object[] args;
-
-        HandlerMethod handlerMethod;
-
-        private Thread thread;
-
-        /**
-         * 是否已经超时
-         */
-        private volatile boolean timeout;
-
-        /**
-         * 请求是否完成
-         */
-        private volatile boolean finish;
-
-        /**
-         * 线程上下文
-         */
-        private Map<String, Object> context;
-        /**
-         * 管道流上下文
-         */
-        private Map<Object, Object> workContext;
     }
 
 
