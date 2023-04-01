@@ -27,11 +27,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
  * 接口降级服务
@@ -75,6 +73,9 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
      */
     private volatile Node tail = header;
 
+
+    private final CountDownLatch countDownLatch = new CountDownLatch();
+
     /**
      * 链表操作锁
      */
@@ -86,6 +87,12 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
         // 已经超时
         Runnable run = () -> {
             while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    countDownLatch.await();
+                    TimeUnit.MILLISECONDS.sleep(10);
+                } catch (InterruptedException e) {
+                    return;
+                }
                 var time = System.currentTimeMillis();
                 Node before = header;
                 for (var node = header.next; node != null; node = node.next) {
@@ -106,7 +113,8 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
                 }
             }
         };
-        backstageThread = new Thread(run, "TIMEOUT_MONITOR_THREAD");
+        backstageThread = new Thread(run, "KERAY_TIMEOUT_MONITOR_THREAD");
+        backstageThread.setPriority(1);
         backstageThread.start();
     }
 
@@ -277,6 +285,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
             tail.next = node;
             tail = node;
         }
+        countDownLatch.add();
     }
 
     /**
@@ -287,6 +296,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
      * @return
      */
     private Node remove(Node before, Node node) {
+        countDownLatch.countDown();
         synchronized (clock) {
             before.next = node.next;
             node.next = null;
@@ -343,4 +353,44 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
          */
         private Map<Object, Object> workContext;
     }
+
+
+    public static class CountDownLatch {
+        private static final class Sync extends AbstractQueuedSynchronizer {
+
+            protected int tryAcquireShared(int acquires) {
+                return (getState() > 0) ? 1 : -1;
+            }
+
+            protected boolean tryReleaseShared(int releases) {
+                for (; ; ) {
+                    int c = getState();
+                    int nextc = c + releases;
+                    if (compareAndSetState(c, nextc))
+                        return releases > 0;
+                }
+            }
+        }
+
+        private final Sync sync;
+
+        public CountDownLatch() {
+            this.sync = new Sync();
+        }
+
+        public void await() throws InterruptedException {
+            sync.acquireSharedInterruptibly(1);
+        }
+
+        public void countDown() {
+            sync.releaseShared(-1);
+        }
+
+        public void add() {
+            sync.releaseShared(1);
+        }
+
+
+    }
+
 }
