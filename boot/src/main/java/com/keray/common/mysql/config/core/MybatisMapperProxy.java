@@ -36,9 +36,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * <p> 从 {@link MapperProxy}  copy 过来 </p>
- * <li> 使用 MybatisMapperMethod </li>
- *
+ * <p> 从 {@link com.baomidou.mybatisplus.core.override.MybatisMapperProxy}  copy 过来 </p>
+ * 拦截mapper的方法执行
  * @author miemie
  * @since 2018-06-09
  */
@@ -102,6 +101,9 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
     }
 
 
+    /**
+     * 执行mapper的代理方法，如果方法有对应的注解，对应设置更新时间 id这些
+     */
     protected void modelProcess(Object proxy, Method method, Object[] args) {
         if (MybatisMapperProxy.userContext == null) {
             synchronized (MybatisMapperProxy.class) {
@@ -118,6 +120,9 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
         if (ani != null) insert(args);
     }
 
+    /**
+     * 通过id更新时
+     */
     public void beforeUpdateById(Object[] args) {
         IBSDEntity model = (IBSDEntity) args[0];
         if (model instanceof IBSDUEntity) {
@@ -132,6 +137,9 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
         }
     }
 
+    /**
+     * 通过updateWrapper更新时
+     */
     public void beforeUpdate(Object[] args, Object target) {
         IBSDEntity model = null;
         Update update;
@@ -187,6 +195,9 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
         }
     }
 
+    /**
+     * insert新增数据时
+     */
     public void insert(Object[] args) {
         Object data = args[0];
         Consumer<IBSEntity> work = (model) -> {
