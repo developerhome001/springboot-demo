@@ -10,10 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Slf4j
-public class SingleServerLock implements DistributedLock<String> {
+public class SingleServerLock implements DistributedLock<SingleServerLockNode> {
 
     private final ConcurrentHashMap<String, ReentrantLock> data = new ConcurrentHashMap<>();
 
@@ -34,18 +33,23 @@ public class SingleServerLock implements DistributedLock<String> {
     }
 
     @Override
-    public String tryLock(String key, long timeout) throws InterruptedException, TimeoutException {
+    public SingleServerLockNode tryLock(String key, long timeout) throws InterruptedException, TimeoutException {
         // 加锁
         var lock = data.computeIfAbsent(key, k -> new ReentrantLock());
         var r = lock.tryLock(timeout, TimeUnit.MILLISECONDS);
         if (!r) throw new TimeoutException();
-        return key;
+        return new SingleServerLockNode(lock, key);
     }
 
     @Override
-    public void unLock(String lock) {
-        var lk = data.remove(lock);
-        if (lk != null) lk.unlock();
+    public void unLock(SingleServerLockNode lock) {
+        var lk = lock.lock();
+        if (lk != null) {
+            // 在重入锁最后一次释放时在data中移除
+            // 这个锁必须没有等待的线程
+            if (lk.getQueueLength() == 0 && lk.getHoldCount() == 1) data.remove(lock.key());
+            lk.unlock();
+        }
     }
-
 }
+

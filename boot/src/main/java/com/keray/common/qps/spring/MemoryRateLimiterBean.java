@@ -3,6 +3,7 @@ package com.keray.common.qps.spring;
 import com.keray.common.exception.QPSFailException;
 import com.keray.common.lock.DistributedLock;
 import com.keray.common.lock.SingleServerLock;
+import com.keray.common.lock.SingleServerLockNode;
 import com.keray.common.qps.MemoryRateLimiterStore;
 import com.keray.common.qps.RateLimiter;
 import com.keray.common.qps.RateLimiterParams;
@@ -15,7 +16,7 @@ public class MemoryRateLimiterBean implements RateLimiterBean<String> {
 
     private final RateLimiterStore rateLimiterStore = new MemoryRateLimiterStore();
 
-    private final DistributedLock<String> lock = SingleServerLock.get();
+    private final DistributedLock<SingleServerLockNode> lock = SingleServerLock.get();
 
 
     @Override
