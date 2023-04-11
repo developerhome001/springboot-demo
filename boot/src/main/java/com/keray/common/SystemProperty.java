@@ -24,4 +24,8 @@ public class SystemProperty {
      * sys线程池的大小
      */
     public static final String SYS_POOL_SIZE = "SYS_POOL_SIZE";
+    /**
+     * duid的cookie的domain
+     */
+    public static final String DUID_DOMAIN = "DUID_DOMAIN";
 }

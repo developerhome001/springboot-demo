@@ -2,12 +2,14 @@ package com.keray.common.filter;
 
 import cn.hutool.core.util.StrUtil;
 import com.keray.common.IUserContext;
+import com.keray.common.SystemProperty;
 import com.keray.common.context.ThreadCacheContext;
 import com.keray.common.mysql.config.MybatisPlusContext;
 import com.keray.common.util.HttpContextUtil;
 import com.keray.common.util.HttpWebUtil;
 import com.keray.common.utils.UUIDUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +39,13 @@ public class BaseMessageFilter implements Filter {
 
     @Resource
     private ApplicationContext applicationContext;
+
+    private final DuidGenerate duidGenerate;
+
+    public BaseMessageFilter(ObjectProvider<DuidGenerate> duidGenerate) {
+        this.duidGenerate = duidGenerate.getIfAvailable(() -> UUIDUtil::generateUUIDByTimestamp);
+    }
+
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -79,12 +88,14 @@ public class BaseMessageFilter implements Filter {
     }
 
     public String generateBrowserUUID(HttpServletResponse response) {
-        String uuid = UUIDUtil.generateUUIDByTimestamp();
+        String uuid = duidGenerate.generate();
         Cookie cookie = new Cookie(BaseMessageFilter.TOKEN_DEVICE_UUID_KEY, uuid);
         cookie.setPath("/");
         cookie.setMaxAge(3600 * 24 * 9999);
         cookie.setHttpOnly(false);
         cookie.setValue(uuid);
+        var domain = System.getProperty(SystemProperty.DUID_DOMAIN, "");
+        if (StrUtil.isNotBlank(domain)) cookie.setDomain(domain);
         response.addCookie(cookie);
         return uuid;
     }
