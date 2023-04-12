@@ -48,6 +48,7 @@ public class RateLimiter {
         // 如果是默认设置时
         if (millisecond == 1000 && recoveryCount == 1) {
             millisecond = 1000 / maxRate;
+            millisecond = millisecond == 0 ? 1 : millisecond;
         }
         if (maxRate < 1 || acquireCount < 1)
             throw new RuntimeException("最大令牌数不允许小于1 获取令牌数不允许小于1");
