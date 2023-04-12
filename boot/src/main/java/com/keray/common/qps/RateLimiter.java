@@ -45,6 +45,10 @@ public class RateLimiter {
         var appointCron = params.getAppointCron();
         var recoveryCount = params.getRecoveryCount();
         var acquireCount = params.getAcquireCount();
+        // 如果是默认设置时
+        if (millisecond == 1000 && recoveryCount == 1) {
+            millisecond = 1000 / maxRate;
+        }
         if (maxRate < 1 || acquireCount < 1)
             throw new RuntimeException("最大令牌数不允许小于1 获取令牌数不允许小于1");
         var r = !needRelease;
