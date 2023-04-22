@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
 
@@ -35,7 +36,6 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
     @Resource
     @Getter
     private QpsConfig qpsConfig;
-
 
 
     protected String annDataGetKey(RateLimiterApi data) {
@@ -95,10 +95,10 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
             var urlData = getQpsConfig().getUrlData();
             // url通配限制
             var value = urlData.get("*");
-            urlQps(urlData, value, ip, req, handler, null, false, releaseList);
+            urlQps(urlData, value, ip, req, handler, null, releaseList);
             // 指定url的QPS控制
             value = uriVal(urlData, req.getRequestURI(), false);
-            hadWork = urlQps(urlData, value, ip, req, handler, null, false, releaseList);
+            hadWork = urlQps(urlData, value, ip, req, handler, null, releaseList);
         }
         return hadWork;
     }
@@ -189,29 +189,31 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
 
 
     protected boolean urlQps(Map<String, LinkedList<QpsData>> urlData,
-                             LinkedList<QpsData> list, String ip, HttpServletRequest req, HandlerMethod handler, String namespace, boolean isNamespace, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
+                             LinkedList<QpsData> list, String ip, HttpServletRequest req, HandlerMethod handler, String namespace, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         var hadWork = false;
+        var parentNamespace = namespace;
         if (list != null) {
             // 基于配置文件的QPS控制已经处理，设置信号让基于注解的处理无效  数组为空表示这个接口放行
             hadWork = true;
             for (var value : list) {
                 RateLimiterBean rateLimiter = this.getBean(value.getBean());
-                namespace = namespace == null ? value.getNamespace() : namespace;
+                namespace = value.getNamespace() == null ? namespace : value.getNamespace();
                 var key = userContext.loginStatus() ? userContext.currentUserId() : userContext.getDuid();
                 if (value.getTarget() == RateLimiterApiTarget.ip) {
                     key = ip;
                 } else if (value.getTarget() == RateLimiterApiTarget.namespace) {
-                    key = isNamespace ? namespace : value.getNamespace();
+                    key = namespace;
                     // 空间名配置掉了时返回没有处理过
                     if (StrUtil.isEmpty(key)) return false;
                 }
                 if (StrUtil.isEmpty(namespace)) {
                     namespace = MD5Util.MD5Encode(req.getRequestURI());
-                } else if (!isNamespace) {
+                }
+                // 只有当前没设置maxRate时才当做指定namespace的策略限制
+                else if (value.getMaxRate() == 0) {
                     var nameList = urlData.get(namespace);
                     if (nameList != null) {
-                        urlQps(urlData, nameList, ip, req, handler, namespace, true, releaseList);
-                        return true;
+                        return urlQps(urlData, nameList, ip, req, handler, namespace, releaseList);
                     }
                 }
                 try {
