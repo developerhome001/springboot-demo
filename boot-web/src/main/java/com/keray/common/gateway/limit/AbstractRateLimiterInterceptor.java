@@ -191,7 +191,6 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
     protected boolean urlQps(Map<String, LinkedList<QpsData>> urlData,
                              LinkedList<QpsData> list, String ip, HttpServletRequest req, HandlerMethod handler, String namespace, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         var hadWork = false;
-        var parentNamespace = namespace;
         if (list != null) {
             // 基于配置文件的QPS控制已经处理，设置信号让基于注解的处理无效  数组为空表示这个接口放行
             hadWork = true;
