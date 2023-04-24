@@ -160,35 +160,41 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
         put(node);
         workContext.put(HOOKS_KEY, new LinkedList<>());
         workContext.put(CONTEXT_NODE, node);
-        Result result = (Result) callback.get();
-        node.setFinish(true);
-        if (node.isTimeout()) {
-            // 超时了直接将code设置为超时code 并将result修改为fail便于apilog记录日志
-            if (result instanceof Result.SuccessResult<?> sr) {
-                return Result.fail(sr.getData(), CommonResultCode.timeoutOk.getCode(), CommonResultCode.timeoutOk.getMessage(), null);
+        try {
+
+            Result result = (Result) callback.get();
+            node.setFinish(true);
+            if (node.isTimeout()) {
+                // 超时了直接将code设置为超时code 并将result修改为fail便于apilog记录日志
+                if (result instanceof Result.SuccessResult<?> sr) {
+                    return Result.fail(sr.getData(), CommonResultCode.timeoutOk.getCode(), CommonResultCode.timeoutOk.getMessage(), null);
+                }
+                var fail = (Result.FailResult) result;
+                // 如果是中断异常 原因是超时后原执行线程被中断  中断执行点在
+                // requestTimeout函数执行
+                if (fail.getError() instanceof InterruptedException) {
+                    result.setMessage("接口执行超时被中断");
+                }
+                // 设置为timeoutOk 使得com.keray.common.keray.KerayServletInvocableHandlerMethod.invokeAndHandle方法不在对返回值处理
+                // 因为超时后socket已经返回数据并关闭了
+                result.setCode(CommonResultCode.timeoutOk.getCode());
+                result.setApiDown(true);
+                return result;
             }
-            var fail = (Result.FailResult) result;
-            // 如果是中断异常 原因是超时后原执行线程被中断  中断执行点在
-            // requestTimeout函数执行
-            if (fail.getError() instanceof InterruptedException) {
-                result.setMessage("接口执行超时被中断");
-            }
-            // 设置为timeoutOk 使得com.keray.common.keray.KerayServletInvocableHandlerMethod.invokeAndHandle方法不在对返回值处理
-            // 因为超时后socket已经返回数据并关闭了
-            result.setCode(CommonResultCode.timeoutOk.getCode());
-            result.setApiDown(true);
-            return result;
+            // 如果接口时成功的不处理降级
+            if (result instanceof Result.SuccessResult<?>) return result;
+            Result.FailResult fail = (Result.FailResult) result;
+            var code = fail.getCode();
+            // 如果忽略降级这个错误的code  直接返回
+            for (var i : ani.ignoreCodes()) if (code == i) return result;
+            // 用户使用QPS限制时不降级  404资源未找到时不降级  超时任何情况下都降级
+            if (code == CommonResultCode.notFund.getCode() ||
+                    code == CommonResultCode.limitedAccess.getCode()) return result;
+            return returnData(ani, fail, req, res, args, handlerMethod, CommonResultCode.subOk.getCode());
+        } catch (Exception e) {
+            node.setFinish(true);
+            throw e;
         }
-        // 如果接口时成功的不处理降级
-        if (result instanceof Result.SuccessResult<?>) return result;
-        Result.FailResult fail = (Result.FailResult) result;
-        var code = fail.getCode();
-        // 如果忽略降级这个错误的code  直接返回
-        for (var i : ani.ignoreCodes()) if (code == i) return result;
-        // 用户使用QPS限制时不降级  404资源未找到时不降级  超时任何情况下都降级
-        if (code == CommonResultCode.notFund.getCode() ||
-                code == CommonResultCode.limitedAccess.getCode()) return result;
-        return returnData(ani, fail, req, res, args, handlerMethod, CommonResultCode.subOk.getCode());
     }
 
     /**
