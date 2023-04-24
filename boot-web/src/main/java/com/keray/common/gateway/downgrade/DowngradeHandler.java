@@ -4,6 +4,9 @@ import com.keray.common.Result;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+
 /**
  * 接口降级处理器
  */
@@ -17,5 +20,5 @@ public interface DowngradeHandler {
      * @param handlerMethod 接口对象
      * @return
      */
-    Object handler(ApiDowngrade annotation, Result result, NativeWebRequest request, Object[] args, HandlerMethod handlerMethod);
+    Object handler(ApiDowngrade annotation, Result result, ServletRequest request, ServletResponse response, Object[] args, HandlerMethod handlerMethod);
 }

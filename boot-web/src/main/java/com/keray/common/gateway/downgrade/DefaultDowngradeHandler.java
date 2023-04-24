@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,7 +22,7 @@ import java.util.Map;
 public class DefaultDowngradeHandler implements DefDowngradeHandler {
 
     @Override
-    public Object handler(ApiDowngrade annotation, Result result, NativeWebRequest request, Object[] args, HandlerMethod handlerMethod) {
+    public Object handler(ApiDowngrade annotation, Result result, ServletRequest request, ServletResponse response, Object[] args, HandlerMethod handlerMethod) {
         var json = annotation.json();
         if (!json.isEmpty()) {
             if (json.endsWith("\r") || json.endsWith("\n")) json = json.substring(0, json.length() - 1);

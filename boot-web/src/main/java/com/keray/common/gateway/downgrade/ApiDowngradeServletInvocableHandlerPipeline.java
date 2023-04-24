@@ -17,7 +17,9 @@ import org.springframework.web.method.HandlerMethod;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedList;
 import java.util.List;
@@ -63,7 +65,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
     /**
      * 链表头部
      */
-    private final Node header = new Node(0, null, null, null, null, null, null, null);
+    private final Node header = new Node(0, null, null, null, null, null, null, null, null);
 
     /**
      * 链表尾部
@@ -152,44 +154,41 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
         for (var handler : apiDowngradeHandlers) {
             if (!handler.handler(ani)) return callback.get();
         }
-        var node = new Node(System.currentTimeMillis(), ani, request, args, handlerMethod, Thread.currentThread(), context.export(), workContext);
+        var req = request.getNativeRequest(ServletRequest.class);
+        var res = request.getNativeRequest(ServletResponse.class);
+        var node = new Node(System.currentTimeMillis(), ani, req, res, args, handlerMethod, Thread.currentThread(), context.export(), workContext);
         put(node);
         workContext.put(HOOKS_KEY, new LinkedList<>());
         workContext.put(CONTEXT_NODE, node);
-        try {
-            Result result = (Result) callback.get();
-            node.setFinish(true);
-            if (node.isTimeout()) {
-                // 超时了直接将code设置为超时code 并将result修改为fail便于apilog记录日志
-                if (result instanceof Result.SuccessResult<?> sr) {
-                    return Result.fail(sr.getData(), CommonResultCode.timeoutOk.getCode(), CommonResultCode.timeoutOk.getMessage(), null);
-                }
-                var fail = (Result.FailResult) result;
-                // 如果是中断异常 原因是超时后原执行线程被中断  中断执行点在
-                // requestTimeout函数执行
-                if (fail.getError() instanceof InterruptedException) {
-                    result.setMessage("接口执行超时被中断");
-                }
-                // 设置为timeoutOk 使得com.keray.common.keray.KerayServletInvocableHandlerMethod.invokeAndHandle方法不在对返回值处理
-                // 因为超时后socket已经返回数据并关闭了
-                result.setCode(CommonResultCode.timeoutOk.getCode());
-                result.setApiDown(true);
-                return result;
+        Result result = (Result) callback.get();
+        node.setFinish(true);
+        if (node.isTimeout()) {
+            // 超时了直接将code设置为超时code 并将result修改为fail便于apilog记录日志
+            if (result instanceof Result.SuccessResult<?> sr) {
+                return Result.fail(sr.getData(), CommonResultCode.timeoutOk.getCode(), CommonResultCode.timeoutOk.getMessage(), null);
             }
-            // 如果接口时成功的不处理降级
-            if (result instanceof Result.SuccessResult<?>) return result;
-            Result.FailResult fail = (Result.FailResult) result;
-            var code = fail.getCode();
-            // 如果忽略降级这个错误的code  直接返回
-            for (var i : ani.ignoreCodes()) if (code == i) return result;
-            // 用户使用QPS限制时不降级  404资源未找到时不降级  超时任何情况下都降级
-            if (code == CommonResultCode.notFund.getCode() ||
-                    code == CommonResultCode.limitedAccess.getCode()) return result;
-            return returnData(ani, fail, request, args, handlerMethod, CommonResultCode.subOk.getCode());
-        } catch (Exception e) {
-            node.setFinish(true);
-            return Result.fail(e);
+            var fail = (Result.FailResult) result;
+            // 如果是中断异常 原因是超时后原执行线程被中断  中断执行点在
+            // requestTimeout函数执行
+            if (fail.getError() instanceof InterruptedException) {
+                result.setMessage("接口执行超时被中断");
+            }
+            // 设置为timeoutOk 使得com.keray.common.keray.KerayServletInvocableHandlerMethod.invokeAndHandle方法不在对返回值处理
+            // 因为超时后socket已经返回数据并关闭了
+            result.setCode(CommonResultCode.timeoutOk.getCode());
+            result.setApiDown(true);
+            return result;
         }
+        // 如果接口时成功的不处理降级
+        if (result instanceof Result.SuccessResult<?>) return result;
+        Result.FailResult fail = (Result.FailResult) result;
+        var code = fail.getCode();
+        // 如果忽略降级这个错误的code  直接返回
+        for (var i : ani.ignoreCodes()) if (code == i) return result;
+        // 用户使用QPS限制时不降级  404资源未找到时不降级  超时任何情况下都降级
+        if (code == CommonResultCode.notFund.getCode() ||
+                code == CommonResultCode.limitedAccess.getCode()) return result;
+        return returnData(ani, fail, req, res, args, handlerMethod, CommonResultCode.subOk.getCode());
     }
 
     /**
@@ -208,25 +207,24 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
             try {
                 context.importConf(node.getContext());
                 // 读取降级的数据
-                var returnData = returnData(node.getAni(), Result.fail(CommonResultCode.timeoutOk), node.getRequest(),
+                var returnData = returnData(node.getAni(), Result.fail(CommonResultCode.timeoutOk),
+                        node.getRequest(), node.getResponse(),
                         node.getArgs(), node.getHandlerMethod(), CommonResultCode.timeoutOk.getCode());
                 kerayServletInvocableHandlerMethod.breakpointReturn(returnData);
-                var res = node.getRequest().getNativeResponse(ServletResponse.class);
+                var res = node.getResponse();
                 // 直接关闭socket
                 if (res != null) res.getOutputStream().close();
             } catch (Exception e) {
                 log.error("接口降级失败", e);
                 try {
-                    HttpServletResponse response = node.getRequest().getNativeResponse(HttpServletResponse.class);
-                    if (response == null) {
-                        var r = node.getRequest().getNativeResponse(ServletResponse.class);
-                        if (r != null)
-                            r.getOutputStream().close();
-                        return;
+                    var response = node.getResponse();
+                    if (response instanceof HttpServletResponse res) {
+                        res.setStatus(402);
+                        res.getOutputStream().flush();
+                        res.getOutputStream().close();
                     }
-                    response.setStatus(402);
-                    response.getOutputStream().flush();
-                    response.getOutputStream().close();
+                    if (response != null)
+                        response.getOutputStream().close();
                 } catch (Exception ex) {
                     log.error("接口降级失败1", ex);
                 }
@@ -245,12 +243,12 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
         }
     }
 
-    private Result.FailResult returnData(ApiDowngrade ani, Result.FailResult fail, NativeWebRequest request, Object[] args, HandlerMethod handlerMethod, int code) {
+    private Result.FailResult returnData(ApiDowngrade ani, Result.FailResult fail, ServletRequest request, ServletResponse response, Object[] args, HandlerMethod handlerMethod, int code) {
         // 开始降级
         var clazz = ani.handler();
         var instance = apiDowngradeRegister.getRegister(clazz);
         try {
-            var resultObject = instance.handler(ani, fail, request, args, handlerMethod);
+            var resultObject = instance.handler(ani, fail, request, response, args, handlerMethod);
             // 将降级的对象设置为fail  但是code设置成功的code
             // 设置为fail为了日志记录  code设置为成功为了前端无感知
             if (resultObject instanceof Result.SuccessResult<?> sr) {

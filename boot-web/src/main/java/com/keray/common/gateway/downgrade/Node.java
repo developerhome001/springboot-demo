@@ -2,9 +2,10 @@ package com.keray.common.gateway.downgrade;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import java.util.Map;
 
 /**
@@ -25,7 +26,9 @@ public class Node {
      */
     private final ApiDowngrade ani;
 
-    private final NativeWebRequest request;
+    private final ServletRequest request;
+
+    private final ServletResponse response;
 
     private final Object[] args;
 
@@ -42,12 +45,13 @@ public class Node {
      */
     private final Map<Object, Object> workContext;
 
-    public Node(long time, ApiDowngrade ani, NativeWebRequest request,
+    public Node(long time, ApiDowngrade ani, ServletRequest request, ServletResponse response,
                 Object[] args, HandlerMethod handlerMethod,
                 Thread thread, Map<String, Object> context, Map<Object, Object> workContext) {
         this.time = time;
         this.ani = ani;
         this.request = request;
+        this.response = response;
         this.args = args;
         this.handlerMethod = handlerMethod;
         this.thread = thread;
