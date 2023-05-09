@@ -5,6 +5,8 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.keray.common.SpringContextHolder;
 import com.keray.common.utils.ImageCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import javax.imageio.ImageIO;
@@ -28,6 +30,7 @@ public class RotateImage {
         RotateImage.redisTemplate = SpringContextHolder.getBean(RedisTemplate.class);
     }
 
+    @Deprecated
     public static BufferedImage generate(HttpServletRequest request, HttpServletResponse response, java.util.List<String> urls) throws IOException {
         if (CollUtil.isEmpty(urls)) {
             throw new RuntimeException();
@@ -40,6 +43,7 @@ public class RotateImage {
         return ImageCode.rotate(ImageIO.read(new URL(url)), angel);
     }
 
+    @Deprecated
     public static boolean imageCodeCheck(int angel, HttpServletRequest request) {
         var codeUid = HttpWebUtil.getCookieValue(request, CODE_UUID_COOKIE_KEY);
         if (StrUtil.isEmpty(codeUid)) return false;
@@ -63,6 +67,7 @@ public class RotateImage {
         return result;
     }
 
+    @Deprecated
     public static boolean codeCheckPass(HttpServletRequest request) {
         var codeUid = HttpWebUtil.getCookieValue(request, CODE_UUID_COOKIE_KEY);
         if (StrUtil.isEmpty(codeUid)) return false;
@@ -74,7 +79,52 @@ public class RotateImage {
         return true;
     }
 
+    @Deprecated
     public static String getAiCode(HttpServletRequest request) {
         return HttpWebUtil.getCookieValue(request, CODE_UUID_COOKIE_KEY);
+    }
+
+
+    @Getter
+    @Setter
+    public static class RotateImageData {
+        private int angel;
+
+        private BufferedImage image;
+    }
+
+
+    /**
+     * 生成图片验证码
+     *
+     * @param urls 图片地址
+     * @return 旋转后的图片
+     * @throws IOException
+     */
+    public static RotateImageData generate(java.util.List<String> urls) throws IOException {
+        if (CollUtil.isEmpty(urls)) {
+            throw new RuntimeException();
+        }
+        int angel = RandomUtil.randomInt(5, 360);
+        String url = urls.get(RandomUtil.randomInt(0, urls.size()));
+        var image = ImageCode.rotate(ImageIO.read(new URL(url)), angel);
+        var result = new RotateImageData();
+        result.setAngel(angel);
+        result.setImage(image);
+        return result;
+    }
+
+    /**
+     * 校验验证码角度
+     *
+     * @param rightAngel 正确的旋转角度
+     * @param inputAngel 输入的旋转角度
+     * @return
+     */
+    public static boolean imageCodeCheck(int rightAngel, int inputAngel) {
+        for (int i = inputAngel - 5; i < inputAngel + 5; i++) {
+            if (i == -rightAngel || i == 360 - rightAngel) return true;
+        }
+        return false;
     }
 }

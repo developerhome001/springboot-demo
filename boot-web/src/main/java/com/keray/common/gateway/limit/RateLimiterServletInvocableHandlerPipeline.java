@@ -9,6 +9,11 @@ import com.keray.common.gateway.downgrade.ApiDowngradeServletInvocableHandlerPip
 import com.keray.common.gateway.downgrade.Node;
 import com.keray.common.handler.ServletInvocableHandlerMethodCallback;
 import com.keray.common.handler.ServletInvocableHandlerPipeline;
+import com.keray.common.qps.RateLimiterParams;
+import com.keray.common.qps.RejectStrategy;
+import com.keray.common.qps.spring.RateLimiterBean;
+import com.keray.common.service.AiService;
+import com.keray.common.util.HttpWebUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -17,7 +22,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +43,12 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
     private final RateLimiterInterceptor rateLimiterInterceptor;
 
     private final IUserContext<?> userContext;
+
+    @Resource
+    private AiService aiService;
+
+    @Resource
+    private RateLimiterBean memoryRateLimiterBean;
 
     public RateLimiterServletInvocableHandlerPipeline(RateLimiterInterceptor rateLimiterInterceptor, IUserContext<?> userContext) {
         log.info("qps流控开启");
@@ -72,18 +85,24 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
             }
         };
         try {
-            var haveWork = rateLimiterInterceptor.interceptorConsumer(request, handlerMethod, releaseData);
-            if (haveWork) {
-                run.run();
-                return callback.get();
-            }
-            var group = handlerMethod.getMethodAnnotation(RateLimiterGroup.class);
-            if (group != null) {
-                for (var da : group.value()) exec(da, request, handlerMethod, releaseData);
-            }
-            var data = handlerMethod.getMethodAnnotation(RateLimiterApi.class);
-            if (data != null) {
-                exec(data, request, handlerMethod, releaseData);
+            try {
+                var haveWork = rateLimiterInterceptor.interceptorConsumer(request, handlerMethod, releaseData);
+                if (haveWork) {
+                    run.run();
+                    return callback.get();
+                }
+                var group = handlerMethod.getMethodAnnotation(RateLimiterGroup.class);
+                if (group != null) {
+                    for (var da : group.value()) exec(da, request, handlerMethod, releaseData);
+                }
+                var data = handlerMethod.getMethodAnnotation(RateLimiterApi.class);
+                if (data != null) {
+                    exec(data, request, handlerMethod, releaseData);
+                }
+            } catch (QPSFailException e) {
+                if (!aiCodeCheck(request.getNativeRequest(HttpServletRequest.class))) {
+                    throw e;
+                }
             }
             run.run();
             return callback.get();
@@ -110,4 +129,14 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
     }
 
 
+    private boolean aiCodeCheck(HttpServletRequest request) throws QPSFailException, InterruptedException {
+        if (!aiService.aiCodeCheck(request, userContext.currentIp(), userContext.getDuid())) return false;
+        // 限制aiCode的流控 500毫秒一次
+        memoryRateLimiterBean.acquire(new RateLimiterParams()
+                .setMaxRate(1)
+                .setMillisecond(500)
+                .setRejectStrategy(RejectStrategy.wait)
+        );
+        return true;
+    }
 }
