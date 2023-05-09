@@ -72,28 +72,14 @@ public class KerayHandlerMethodArgumentResolverConfig implements KerayHandlerMet
     }
 
     public void addKerayResolver(KerayHandlerMethodArgumentResolver bean) {
-        KerayHandlerMethodArgumentResolver first = kerayArgumentResolvers.isEmpty() ? null : kerayArgumentResolvers.get(0);
-        if (first == null) {
-            kerayArgumentResolvers.add(bean);
-            return;
-        }
-        if (bean.getOrder() < first.getOrder()) {
-            kerayArgumentResolvers.add(0, bean);
-            return;
-        }
-        KerayHandlerMethodArgumentResolver last = kerayArgumentResolvers.get(kerayArgumentResolvers.size() - 1);
-        if (bean.getOrder() > last.getOrder()) {
-            kerayArgumentResolvers.add(bean);
-            return;
-        }
-        for (var i = 0; i < kerayArgumentResolvers.size() - 1; i++) {
+        for (var i = 0; i < kerayArgumentResolvers.size(); i++) {
             var item = kerayArgumentResolvers.get(i);
-            var item1 = kerayArgumentResolvers.get(i + 1);
-            if (item.getOrder() < bean.getOrder() && item1.getOrder() > bean.getOrder()) {
-                kerayArgumentResolvers.add(i + 1, bean);
+            if (bean.getOrder() < item.getOrder()) {
+                kerayArgumentResolvers.add(i, bean);
                 return;
             }
         }
+        kerayArgumentResolvers.add(bean);
     }
 
     public RequestMappingHandlerAdapter getAdapter() {
