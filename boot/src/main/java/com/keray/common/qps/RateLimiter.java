@@ -178,7 +178,7 @@ public class RateLimiter {
         var waitTime = params.getWaitTime();
         var waitSpeed = params.getWaitSpeed();
         if (rejectStrategy == RejectStrategy.noting) return;
-        if (rejectStrategy == RejectStrategy.throw_exception) throw new QPSFailException();
+        if (rejectStrategy == RejectStrategy.throw_exception) throw new QPSFailException(params);
         if (rejectStrategy == RejectStrategy.wait && waitTime > 0) {
             Thread.sleep(waitSpeed);
             params.setWaitTime(params.getWaitTime() - waitSpeed);
@@ -186,7 +186,7 @@ public class RateLimiter {
             privateAcquire(params, store, distributedLock, !params.isNeedRelease());
             return;
         }
-        throw new QPSFailException();
+        throw new QPSFailException(params);
     }
 
     /**

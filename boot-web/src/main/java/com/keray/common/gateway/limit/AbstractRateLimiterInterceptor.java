@@ -5,7 +5,9 @@ import com.keray.common.IUserContext;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.exception.QPSFailException;
 import com.keray.common.qps.RateLimiterParams;
+import com.keray.common.qps.RejectStrategy;
 import com.keray.common.qps.spring.RateLimiterBean;
+import com.keray.common.service.AiService;
 import com.keray.common.util.MoreUriPatternMatcher;
 import com.keray.common.utils.IpAuthUtil;
 import com.keray.common.utils.MD5Util;
@@ -17,6 +19,7 @@ import org.springframework.web.method.HandlerMethod;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +40,8 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
     @Getter
     private QpsConfig qpsConfig;
 
+    @Resource
+    private AiService aiService;
 
     protected String annDataGetKey(RateLimiterApi data) {
         if (data.target() == RateLimiterApiTarget.namespace) {
@@ -129,6 +134,22 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
         }
     }
 
+
+    @Override
+    public boolean failCall(HttpServletRequest request, HttpServletResponse response, HandlerMethod handler, QPSFailException e) throws QPSFailException, InterruptedException {
+        var code = aiService.aiCodeCheck(request, userContext.currentIp(), userContext.getDuid());
+        if (code == null) return false;
+        // 限制aiCode的流控 1000毫秒一次
+        memoryRateLimiterBean.acquire(new RateLimiterParams()
+                .setKey(code)
+                .setNamespace("QPS:AI_CODE")
+                .setMaxRate(20)
+                .setRejectStrategy(RejectStrategy.wait)
+        );
+        return true;
+    }
+
+
     /**
      * @param clientData
      * @param path
@@ -152,7 +173,7 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
                     releaseList.add(cp);
                 }
             } catch (QPSFailException e) {
-                throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage());
+                throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage(), e.getParams());
             }
         }
         // 判断客户端当前接口是否达到上限
@@ -181,7 +202,7 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
                     releaseList.add(cp);
                 }
             } catch (QPSFailException e) {
-                throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage());
+                throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage(), e.getParams());
             }
         }
         return true;
@@ -225,7 +246,7 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
                         releaseList.add(cp);
                     }
                 } catch (QPSFailException e) {
-                    throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage());
+                    throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage(), e.getParams());
                 }
             }
         }

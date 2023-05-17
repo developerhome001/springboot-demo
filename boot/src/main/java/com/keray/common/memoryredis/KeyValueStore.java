@@ -68,6 +68,13 @@ public class KeyValueStore<K, V> {
         return v.value;
     }
 
+    public V remove(K key) {
+        var n = map.remove(key);
+        if (n != null)
+            return n.value;
+        return null;
+    }
+
     public boolean containsKey(K key) {
         return get(key) != null;
     }
@@ -134,8 +141,8 @@ public class KeyValueStore<K, V> {
 
     public static void main(String[] args) throws InterruptedException {
         var store = new KeyValueStore();
-        var now = System.currentTimeMillis();
-        store.put("123", "123", now + 1000);
+        store.put("123", "asdfd", 1000);
+        System.out.println(store.remove("123"));
         for (; ; ) {
             Thread.sleep(100);
             var val = store.get("123");

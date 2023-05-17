@@ -44,4 +44,15 @@ public interface RateLimiterInterceptor {
      * @throws InterruptedException
      */
     void release(String key, QpsData qpsData, NativeWebRequest request, HandlerMethod handler) throws InterruptedException;
+
+    /**
+     * QPS拒绝后的回调
+     *
+     * @param request
+     * @param response
+     * @param handler
+     * @param e        失败信息
+     * @return 返回true后将继续执行接口  false抛出QPS失败信息
+     */
+    boolean failCall(HttpServletRequest request, HttpServletResponse response, HandlerMethod handler, QPSFailException e) throws QPSFailException, InterruptedException;
 }

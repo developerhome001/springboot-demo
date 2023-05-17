@@ -2,6 +2,7 @@ package com.keray.common.gateway.limit;
 
 import cn.hutool.core.util.StrUtil;
 import com.keray.common.IUserContext;
+import com.keray.common.annotation.QpsIgnore;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.annotation.RateLimiterGroup;
 import com.keray.common.exception.QPSFailException;
@@ -44,8 +45,6 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
 
     private final IUserContext<?> userContext;
 
-    @Resource
-    private AiService aiService;
 
     @Resource
     private RateLimiterBean memoryRateLimiterBean;
@@ -68,6 +67,12 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
 
     @Override
     public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
+        // 特殊QPS放行
+        if ("keray".equals(request.getHeader("keray"))) return callback.get();
+        // 忽略的接口
+        if (handlerMethod.hasMethodAnnotation(QpsIgnore.class)) {
+            return callback.get();
+        }
         var releaseData = new LinkedList<QpsData>();
         Runnable run = () -> {
             // 添加接口降级超时处理勾子
@@ -100,7 +105,7 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
                     exec(data, request, handlerMethod, releaseData);
                 }
             } catch (QPSFailException e) {
-                if (!aiCodeCheck(request.getNativeRequest(HttpServletRequest.class))) {
+                if (!rateLimiterInterceptor.failCall(request.getNativeRequest(HttpServletRequest.class), request.getNativeResponse(HttpServletResponse.class), handlerMethod, e)) {
                     throw e;
                 }
             }
@@ -120,23 +125,12 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
     private void exec(RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws Exception {
         try {
             rateLimiterInterceptor.interceptor(data, request, handler, releaseList);
-        } catch (QPSFailException failException) {
+        } catch (QPSFailException e) {
             log.warn("qps异常 ip={},duid={},userId={},agent={}", userContext.currentIp(), userContext.getDuid(), userContext.currentUserId(), request.getHeader("User-Agent"));
             if (StrUtil.isNotBlank(data.rejectMessage()))
-                throw new QPSFailException(data.limitType() == RateLimitType.system, data.rejectMessage());
-            throw new QPSFailException(data.limitType() == RateLimitType.system);
+                throw new QPSFailException(data.limitType() == RateLimitType.system, data.rejectMessage(), e.getParams());
+            throw new QPSFailException(data.limitType() == RateLimitType.system, e.getParams());
         }
     }
 
-
-    private boolean aiCodeCheck(HttpServletRequest request) throws QPSFailException, InterruptedException {
-        if (!aiService.aiCodeCheck(request, userContext.currentIp(), userContext.getDuid())) return false;
-        // 限制aiCode的流控 500毫秒一次
-        memoryRateLimiterBean.acquire(new RateLimiterParams()
-                .setMaxRate(1)
-                .setMillisecond(500)
-                .setRejectStrategy(RejectStrategy.wait)
-        );
-        return true;
-    }
 }

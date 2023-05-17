@@ -7,9 +7,6 @@ import cn.hutool.crypto.asymmetric.KeyType;
 import cn.hutool.crypto.asymmetric.SM2;
 import com.alibaba.fastjson2.JSON;
 import com.keray.common.diamond.Diamond;
-import com.keray.common.exception.QPSFailException;
-import com.keray.common.qps.RateLimiterParams;
-import com.keray.common.qps.RejectStrategy;
 import com.keray.common.util.HttpWebUtil;
 import com.keray.common.util.RotateImage;
 import com.keray.common.utils.MD5Util;
@@ -69,16 +66,16 @@ public class AiService {
     /**
      * 校验aiCode是否合法
      */
-    public boolean aiCodeCheck(HttpServletRequest request, String ip, String duid) {
+    public String aiCodeCheck(HttpServletRequest request, String ip, String duid) {
         var aiCode = HttpWebUtil.getCookieValue(request, AI_CODE);
         if (StrUtil.isNotBlank(aiCode)) {
             var str = sm2.decryptStr(aiCode, KeyType.PrivateKey).split("_");
             var now = System.currentTimeMillis();
             var time = Long.parseLong(str[0]);
             // 如果aicode超过305(实际有效期300秒)秒有效期就丢弃
-            return now - time <= 305_000 && str[1].equals(ip) && str[2].equals(duid) && str[3].equals(aiCodeSign);
+            return now - time <= 305_000 && str[1].equals(ip) && str[2].equals(duid) && str[3].equals(aiCodeSign) ? aiCode : null;
         }
-        return false;
+        return null;
     }
 
     /**
@@ -87,6 +84,15 @@ public class AiService {
     public String generateAiCode(String ip, String duid) {
         return sm2.encryptBase64(String.format("%d_%s_%s_%s", System.currentTimeMillis(), ip, duid, aiCodeSign), KeyType.PublicKey);
     }
+
+
+    /**
+     * 生成的code无时效性
+     */
+    public String generateAiCodeLongTime(String ip, String duid) {
+        return MD5Util.MD5Encode(String.format("%s_%s_%s", ip, duid, aiCodeSign));
+    }
+
 
     /**
      * 生成旋转图片验证
@@ -114,13 +120,16 @@ public class AiService {
         var rightAngel = (Integer) redisTemplate.opsForValue().get("AI_CODE_ANGEL:" + key);
         if (rightAngel == null) return false;
         if (RotateImage.imageCodeCheck(rightAngel, angel)) {
-            var aiCode = generateAiCode(ip, duid);
             // 保存aiCode 有效期5分钟
-            HttpWebUtil.addCookie(response, AI_CODE, aiCode, 300);
+            writeAiCode(response, generateAiCode(ip, duid));
             return true;
         }
         // 验证失败删除缓存 防止暴力破解 前端重新获取
         redisTemplate.delete(key);
         return false;
+    }
+
+    public void writeAiCode(HttpServletResponse response, String aiCode) {
+        HttpWebUtil.addCookie(response, AI_CODE, aiCode, 300);
     }
 }
