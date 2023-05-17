@@ -28,9 +28,14 @@ public interface BaseTreeModelV2<T extends BaseTreeModelV2<T, ID>, ID extends Se
     @JsonIgnore
     String getPath();
 
+    @JsonIgnore
+    default String getSplitStr() {
+        return "/";
+    }
+
     default void setPath(String path) {
         if (ObjectUtil.isEmpty(getParentId())) {
-            var spit = path.split("/");
+            var spit = path.split(getSplitStr());
             if (spit.length > 0) {
                 setParentId(idCover(spit[spit.length - 1]));
             }
@@ -52,17 +57,17 @@ public interface BaseTreeModelV2<T extends BaseTreeModelV2<T, ID>, ID extends Se
     default int getLevel() {
         var path = getPath();
         if (StrUtil.isBlank(path)) return 0;
-        return path.split("/").length;
+        return path.split(getSplitStr()).length;
     }
 
     default String getOPath() {
         if (getPath() == null) return null;
-        return getPath() + (getTop() ? getId() : ("/" + getId()));
+        return getPath() + (getTop() ? getId() : (getSplitStr() + getId()));
     }
 
     default ID getTopParentId() {
         var path = getPath();
         if (StrUtil.isEmpty(path)) return getId();
-        return idCover(path.split("/")[0]);
+        return idCover(path.split(getSplitStr())[0]);
     }
 }
