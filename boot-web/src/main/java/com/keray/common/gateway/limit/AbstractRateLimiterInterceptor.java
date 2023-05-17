@@ -2,6 +2,8 @@ package com.keray.common.gateway.limit;
 
 import cn.hutool.core.util.StrUtil;
 import com.keray.common.IUserContext;
+import com.keray.common.annotation.QpsPublicIpIgnore;
+import com.keray.common.annotation.QpsPublicUrlIgnore;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.exception.QPSFailException;
 import com.keray.common.qps.RateLimiterParams;
@@ -13,7 +15,6 @@ import com.keray.common.utils.IpAuthUtil;
 import com.keray.common.utils.MD5Util;
 import lombok.Getter;
 import org.apache.http.protocol.UriPatternMatcher;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
 
@@ -23,7 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
 
@@ -79,6 +79,7 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
         var ip = userContext.currentIp();
         var hadWork = false;
         //先对ip的QPS控制  如果非0.0.0.0/0ip  *型URL匹配上后 后面的流控不继续
+        all:
         {
             var data = getQpsConfig().getData();
             Map<String, QpsData> ipData = null;
@@ -90,6 +91,8 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
                     break;
                 }
             }
+            var pubIgnore = handler.hasMethodAnnotation(QpsPublicIpIgnore.class);
+            if (pubIgnore && "0.0.0.0/0".equals(ipKey)) break all;
             var flag = clientWord(ipData, req.getRequestURI(), ip, ipKey, "IP_QPS", releaseList);
             // 不是通用ip匹配上的
             if (!"0.0.0.0/0".equals(ipKey)) {
@@ -97,10 +100,13 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
             }
         }
         if (!hadWork) {
+            var pubIgnore = handler.hasMethodAnnotation(QpsPublicUrlIgnore.class);
             var urlData = getQpsConfig().getUrlData();
             // url通配限制
             var value = urlData.get("*");
-            urlQps(urlData, value, ip, req, handler, null, releaseList);
+            if (!pubIgnore) {
+                urlQps(urlData, value, ip, req, handler, null, releaseList);
+            }
             // 指定url的QPS控制
             value = uriVal(urlData, req.getRequestURI(), false);
             hadWork = urlQps(urlData, value, ip, req, handler, null, releaseList);
