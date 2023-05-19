@@ -38,7 +38,7 @@ public class ApiTimeInterceptor implements ServletInvocableHandlerPipeline {
 
     @Override
     public int getOrder() {
-        return 900;
+        return 800;
     }
 
     @Override

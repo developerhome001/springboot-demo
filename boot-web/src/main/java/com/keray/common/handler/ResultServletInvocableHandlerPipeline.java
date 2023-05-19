@@ -21,7 +21,7 @@ public class ResultServletInvocableHandlerPipeline implements ServletInvocableHa
 
     @Override
     public int getOrder() {
-        return 1000;
+        return 700;
     }
 
     @Override

@@ -20,6 +20,8 @@ import java.util.Map;
  * {@link ResultServletInvocableHandlerPipeline} 对接口返回参数进行Result结构封装
  * <p>
  * {@link ExceptionServletInvocableHandlerPipeline} 对接口抛出的异常进行封装
+ * log ->  records  -> exception -> qps -> apidown -> exception -> result -> apiTime
+ * 100 ->  200      -> 300       -> 400 -> 500     -> 600       -> 700    -> 800
  */
 public interface ServletInvocableHandlerPipeline extends Ordered {
 

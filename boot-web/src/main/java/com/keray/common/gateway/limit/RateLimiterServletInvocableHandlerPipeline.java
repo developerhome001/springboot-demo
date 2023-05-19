@@ -62,7 +62,7 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
      */
     @Override
     public int getOrder() {
-        return 300;
+        return 400;
     }
 
     @Override

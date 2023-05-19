@@ -32,7 +32,7 @@ public class RecordsServletInvocableHandlerPipeline implements ServletInvocableH
 
     @Override
     public int getOrder() {
-        return 90;
+        return 200;
     }
 
     @Override

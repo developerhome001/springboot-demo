@@ -143,7 +143,7 @@ public class ApiDowngradeServletInvocableHandlerPipeline implements ServletInvoc
      */
     @Override
     public int getOrder() {
-        return 150;
+        return 500;
     }
 
     @Override

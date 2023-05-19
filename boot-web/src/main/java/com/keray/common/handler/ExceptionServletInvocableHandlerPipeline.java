@@ -2,6 +2,8 @@ package com.keray.common.handler;
 
 import com.keray.common.Result;
 import com.keray.common.exception.*;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -17,7 +19,6 @@ import java.util.Map;
  * date:2020/9/7 9:36 下午
  */
 @Slf4j
-@Configuration
 public class ExceptionServletInvocableHandlerPipeline<E extends Throwable> implements ServletInvocableHandlerPipeline, ExceptionHandler<E>, BeanPostProcessor {
 
     private final static ExceptionHandler<Throwable>[] EXCEPTION_HANDLERS = new ExceptionHandler[]{
@@ -25,27 +26,18 @@ public class ExceptionServletInvocableHandlerPipeline<E extends Throwable> imple
             new CodeExceptionHandler()
     };
 
+    @Getter
+    @Setter
+    private int order = 200;
+
     private final LinkedList<ExceptionHandler<Throwable>> CONSUMER_HANDLER = new LinkedList<>();
 
     private final ExceptionHandler<Throwable> defaultExceptionHandler = new DefaultExceptionHandler();
 
     @Override
-    public int getOrder() {
-        return 200;
-    }
-
-    @Override
     public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
         try {
-            Object result = callback.get();
-            if (result instanceof Result.FailResult && ((Result.FailResult<?, ?>) result).getError() != null) {
-                ExceptionHandler<Throwable> exceptionHandler = giveExceptionHandler(((Result.FailResult<?, ?>) result).getError());
-                if (exceptionHandler == null) {
-                    return result;
-                }
-                return exceptionHandler.errorHandler(((Result.FailResult<?, ?>) result).getError());
-            }
-            return result;
+            return callback.get();
         } catch (Throwable error) {
             return errorHandler(error);
         }
