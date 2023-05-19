@@ -50,6 +50,10 @@ public class RateLimiter {
             millisecond = 1000 / maxRate;
             millisecond = millisecond == 0 ? 1 : millisecond;
         }
+        // 如果定时恢复令牌时 设置的默认恢复数量  把回复数量设置为最大数量
+        if (StrUtil.isNotBlank(params.getAppointCron()) && params.getRecoveryCount() == 1) {
+            params.setRecoveryCount(params.getMaxRate());
+        }
         if (maxRate < 1 || acquireCount < 1)
             throw new RuntimeException("最大令牌数不允许小于1 获取令牌数不允许小于1");
         var r = !needRelease;
