@@ -21,6 +21,7 @@ import org.springframework.web.method.HandlerMethod;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +92,8 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
                     break;
                 }
             }
-            var pubIgnore = handler.hasMethodAnnotation(QpsPublicIpIgnore.class);
-            if (pubIgnore && "0.0.0.0/0".equals(ipKey)) break all;
+            if (requestIgnoreRateLimiter(RateLimiterStep.ip, ipKey, request, handler))
+                break all;
             var flag = clientWord(ipData, req.getRequestURI(), ip, ipKey, "IP_QPS", releaseList);
             // 不是通用ip匹配上的
             if (!"0.0.0.0/0".equals(ipKey)) {
@@ -100,16 +101,17 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
             }
         }
         if (!hadWork) {
-            var pubIgnore = handler.hasMethodAnnotation(QpsPublicUrlIgnore.class);
             var urlData = getQpsConfig().getUrlData();
             // url通配限制
             var value = urlData.get("*");
-            if (!pubIgnore) {
+            if (!requestIgnoreRateLimiter(RateLimiterStep.url, "*", request, handler)) {
                 urlQps(urlData, value, ip, req, handler, null, releaseList);
             }
             // 指定url的QPS控制
             value = uriVal(urlData, req.getRequestURI(), false);
-            hadWork = urlQps(urlData, value, ip, req, handler, null, releaseList);
+            if (!requestIgnoreRateLimiter(RateLimiterStep.url, req.getRequestURI(), request, handler)) {
+                hadWork = urlQps(urlData, value, ip, req, handler, null, releaseList);
+            }
         }
         return hadWork;
     }

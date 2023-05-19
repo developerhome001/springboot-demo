@@ -67,10 +67,8 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
 
     @Override
     public Object work(HandlerMethod handlerMethod, Object[] args, NativeWebRequest request, Map<Object, Object> workContext, ServletInvocableHandlerMethodCallback callback) throws Exception {
-        // 特殊QPS放行
-        if ("keray".equals(request.getHeader("keray"))) return callback.get();
         // 忽略的接口
-        if (handlerMethod.hasMethodAnnotation(QpsIgnore.class)) {
+        if (rateLimiterInterceptor.requestIgnoreRateLimiter(RateLimiterInterceptor.RateLimiterStep.start, null, request, handlerMethod)) {
             return callback.get();
         }
         var releaseData = new LinkedList<QpsData>();
@@ -91,7 +89,8 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
         };
         try {
             try {
-                var haveWork = rateLimiterInterceptor.interceptorConsumer(request, handlerMethod, releaseData);
+                var f = rateLimiterInterceptor.requestIgnoreRateLimiter(RateLimiterInterceptor.RateLimiterStep.consumer, null, request, handlerMethod);
+                var haveWork = !f && rateLimiterInterceptor.interceptorConsumer(request, handlerMethod, releaseData);
                 if (haveWork) {
                     run.run();
                     return callback.get();
@@ -124,6 +123,7 @@ public class RateLimiterServletInvocableHandlerPipeline implements ServletInvoca
 
     private void exec(RateLimiterApi data, NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws Exception {
         try {
+            if (rateLimiterInterceptor.requestIgnoreRateLimiter(RateLimiterInterceptor.RateLimiterStep.annotation, null, request, handler)) return;
             rateLimiterInterceptor.interceptor(data, request, handler, releaseList);
         } catch (QPSFailException e) {
             log.warn("qps异常 ip={},duid={},userId={},agent={}", userContext.currentIp(), userContext.getDuid(), userContext.currentUserId(), request.getHeader("User-Agent"));

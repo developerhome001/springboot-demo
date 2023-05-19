@@ -1,5 +1,8 @@
 package com.keray.common.gateway.limit;
 
+import com.keray.common.annotation.QpsIgnore;
+import com.keray.common.annotation.QpsPublicIpIgnore;
+import com.keray.common.annotation.QpsPublicUrlIgnore;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.exception.QPSFailException;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -11,6 +14,47 @@ import java.util.List;
 import java.util.Map;
 
 public interface RateLimiterInterceptor {
+
+
+    /**
+     * 流控阶段
+     */
+    enum RateLimiterStep {
+        start, // 开始阶段
+        consumer, // 配置数据限制阶段
+        ip, // ip控制阶段
+        url, // url控制阶段
+        annotation // 注解控制阶段
+    }
+
+
+    /**
+     * 检验请求是否可以跳过流控
+     *
+     * @param step    流控阶段
+     * @param value   流控阶段的值
+     * @param request 请求
+     * @param handler 处理器
+     * @return
+     */
+    default boolean requestIgnoreRateLimiter(AbstractRateLimiterInterceptor.RateLimiterStep step, Object value, NativeWebRequest request, HandlerMethod handler) {
+        if (step == RateLimiterStep.start) {
+            // 特殊QPS放行
+            // 忽略注解放行
+            return "keray".equals(request.getHeader("keray")) || handler.hasMethodAnnotation(QpsIgnore.class);
+        }
+        if (step == RateLimiterStep.ip) {
+            if ("0.0.0.0/0".equals(value)) {
+                return handler.hasMethodAnnotation(QpsPublicIpIgnore.class);
+            }
+        } else if (step == RateLimiterStep.url) {
+            if ("*".equals(value)) {
+                return handler.hasMethodAnnotation(QpsPublicUrlIgnore.class);
+            }
+        }
+        return false;
+    }
+
 
     /**
      * 自定义流控
