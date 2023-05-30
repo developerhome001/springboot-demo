@@ -61,8 +61,8 @@ public interface BaseTreeModelV2<T extends BaseTreeModelV2<T, ID>, ID extends Se
     }
 
     default String getOPath() {
-        if (getPath() == null) return null;
-        return getPath() + (getTop() ? getId() : (getSplitStr() + getId()));
+        var path = StrUtil.isBlank(getPath()) ? "" : getPath();
+        return path + (getTop() ? getId() : (getSplitStr() + getId()));
     }
 
     default ID getTopParentId() {
