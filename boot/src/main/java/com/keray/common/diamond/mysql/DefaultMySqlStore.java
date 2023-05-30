@@ -1,6 +1,6 @@
 package com.keray.common.diamond.mysql;
 
-import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
 import com.keray.common.diamond.Store;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
@@ -11,7 +11,7 @@ import javax.annotation.Resource;
 
 @MapperScan(basePackages = "com.keray.common.diamond.mysql")
 @Configuration
-@ConditionalOnClass(MybatisConfiguration.class)
+@ConditionalOnClass({MybatisPlusAutoConfiguration.class})
 @Slf4j
 public class DefaultMySqlStore implements Store {
     @Resource

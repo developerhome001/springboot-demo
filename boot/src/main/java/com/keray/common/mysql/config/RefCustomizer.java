@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.keray.common.mysql.config.core.MybatisMapperProxy;
 import com.keray.common.mysql.config.core.MybatisMapperRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
 
 import java.lang.reflect.Method;
@@ -14,6 +15,7 @@ import java.lang.reflect.Method;
  */
 @Slf4j
 @Configuration
+@ConditionalOnClass(ConfigurationCustomizer.class)
 public class RefCustomizer implements ConfigurationCustomizer {
     @Override
     public void customize(MybatisConfiguration configuration) {

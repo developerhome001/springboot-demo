@@ -2,6 +2,7 @@ package com.keray.common.mysql.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
+import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.enums.SqlMethod;
 import com.baomidou.mybatisplus.core.injector.AbstractMethod;
@@ -15,7 +16,6 @@ import com.baomidou.mybatisplus.extension.plugins.inner.BlockAttackInnerIntercep
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.keray.common.entity.IBSMapper;
 import com.keray.common.entity.IBaseMapper;
-import com.keray.common.mysql.config.core.MybatisMapperRegistry;
 import com.keray.common.service.mapper.MybatisPlusCacheMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
@@ -24,6 +24,7 @@ import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.scripting.defaults.RawSqlSource;
 import org.aspectj.lang.annotation.Aspect;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -42,7 +43,7 @@ import java.util.Map;
 @Configuration
 @Aspect
 @Slf4j
-@ConditionalOnClass(MybatisConfiguration.class)
+@ConditionalOnClass({MybatisPlusAutoConfiguration.class})
 @MapperScan("com.keray.common.service.mapper")
 public class MybatisPlusSqlInjector implements ConfigurationCustomizer {
 

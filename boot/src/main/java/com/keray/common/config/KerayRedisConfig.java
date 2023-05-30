@@ -54,6 +54,7 @@ import java.util.List;
  *
  * @author keray
  */
+@ConditionalOnClass(RedisTemplate.class)
 @Configuration(value = "kerayRedisConfig", proxyBeanMethods = false)
 @ConfigurationProperties("spring.redis")
 @Slf4j
