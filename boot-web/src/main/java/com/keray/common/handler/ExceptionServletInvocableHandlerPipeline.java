@@ -52,21 +52,21 @@ public class ExceptionServletInvocableHandlerPipeline<E extends Throwable> imple
     @Override
     public Result<?> errorHandler(Throwable error) {
         ExceptionHandler<Throwable> exceptionHandler = giveExceptionHandler(error);
-        return exceptionHandler != null ? exceptionHandler.errorHandler(error) : defaultExceptionHandler.errorHandler(error);
+        return exceptionHandler.errorHandler(error);
     }
 
     private ExceptionHandler<Throwable> giveExceptionHandler(Throwable e) {
-        for (ExceptionHandler<Throwable> eh : EXCEPTION_HANDLERS) {
-            if (eh.supper(e)) {
-                return eh;
-            }
-        }
         for (ExceptionHandler<Throwable> eh : CONSUMER_HANDLER) {
             if (eh.supper(e)) {
                 return eh;
             }
         }
-        return null;
+        for (ExceptionHandler<Throwable> eh : EXCEPTION_HANDLERS) {
+            if (eh.supper(e)) {
+                return eh;
+            }
+        }
+        return defaultExceptionHandler;
     }
 
     @Override
