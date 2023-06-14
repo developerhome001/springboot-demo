@@ -1,9 +1,8 @@
 package com.keray.common.gateway.limit;
 
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.keray.common.IUserContext;
-import com.keray.common.annotation.QpsPublicIpIgnore;
-import com.keray.common.annotation.QpsPublicUrlIgnore;
 import com.keray.common.annotation.RateLimiterApi;
 import com.keray.common.exception.QPSFailException;
 import com.keray.common.qps.RateLimiterParams;
@@ -14,6 +13,7 @@ import com.keray.common.util.MoreUriPatternMatcher;
 import com.keray.common.utils.IpAuthUtil;
 import com.keray.common.utils.MD5Util;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.http.protocol.UriPatternMatcher;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.HandlerMethod;
@@ -21,10 +21,10 @@ import org.springframework.web.method.HandlerMethod;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
 
@@ -73,17 +73,51 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
                 ;
     }
 
+    @Getter
+    @Setter
+    public static class CustomQpsRes {
+        private Map<String, LinkedList<QpsData>> value;
+        private String key;
+        private String namespace;
+    }
+
+    /**
+     * 返回自定义流控数据  可以根据用户角色来控制流控
+     */
+    protected CustomQpsRes customQpsResList(NativeWebRequest request, HandlerMethod handler, Map<String, Map<String, LinkedList<QpsData>>> data) {
+        return null;
+    }
+
     @Override
     public boolean interceptorConsumer(NativeWebRequest request, HandlerMethod handler, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         var req = request.getNativeRequest(HttpServletRequest.class);
         if (req == null || "keray".equals(req.getHeader("keray"))) return false;
         var ip = userContext.currentIp();
         var hadWork = false;
-        //先对ip的QPS控制  如果非0.0.0.0/0ip  *型URL匹配上后 后面的流控不继续
+        // 自定义流控部分处理
         all:
         {
+            var customRes = customQpsResList(request, handler, getQpsConfig().getCustomData());
+            if (customRes == null) {
+                break all;
+            }
+            if (MapUtil.isEmpty(customRes.getValue())) {
+                hadWork = true;
+                break all;
+            }
+            if (customRes.getKey() == null) throw new RuntimeException("自定义流控key不能为空");
+            Function<QpsData, String> nsFunc = value -> customRes.getNamespace() == null ? MD5Util.MD5Encode(req.getRequestURI()) : customRes.getNamespace();
+            var urlData = customRes.getValue();
+            var list = urlData.get("*");
+            hadWork = qps(urlData, list, "CUS_QPS_ALL", v -> customRes.getKey(), nsFunc, releaseList);
+            var f = qps(urlData, list, "CUS_QPS", v -> customRes.getKey(), nsFunc, releaseList);
+            hadWork = hadWork || f;
+        }
+        //先对ip的QPS控制  如果非0.0.0.0/0ip  *型URL匹配上后 后面的流控不继续
+        all:
+        if (!hadWork) {
             var data = getQpsConfig().getData();
-            Map<String, QpsData> ipData = null;
+            Map<String, LinkedList<QpsData>> ipData = null;
             String ipKey = ip;
             for (var entity : data.entrySet()) {
                 if (IpAuthUtil.ipInIps(ip, List.of(entity.getKey()))) {
@@ -92,25 +126,57 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
                     break;
                 }
             }
-            if (requestIgnoreRateLimiter(RateLimiterStep.ip, ipKey, request, handler))
+            if (ipData == null || requestIgnoreRateLimiter(RateLimiterStep.ip, ipKey, request, handler))
                 break all;
-            var flag = clientWord(ipData, req.getRequestURI(), ip, ipKey, "IP_QPS", releaseList);
+            // url通配限制
+            var list = ipData.get("*");
+            String finalIpKey = ipKey;
+            Function<QpsData, String> keyFunc = value -> {
+                var key = userContext.loginStatus() ? userContext.currentUserId() : userContext.getDuid();
+                if (value.getTarget() == RateLimiterApiTarget.user) {
+                    key = ip;
+                }
+                if (value.getTarget() == RateLimiterApiTarget.ip) {
+                    key = finalIpKey;
+                }
+                return key;
+            };
+            Function<QpsData, String> nsFunc = value -> MD5Util.MD5Encode(req.getRequestURI());
+            var flag = false;
+            if (!requestIgnoreRateLimiter(RateLimiterStep.url, "*", request, handler)) {
+                flag = qps(ipData, list, "IP_QPS_ALL", keyFunc, nsFunc, releaseList);
+            }
+            // 指定url的QPS控制
+            list = uriVal(ipData, req.getRequestURI());
+            if (!requestIgnoreRateLimiter(RateLimiterStep.url, req.getRequestURI(), request, handler)) {
+                var f = qps(ipData, list, "IP_QPS", keyFunc, nsFunc, releaseList);
+                flag = flag || f;
+            }
             // 不是通用ip匹配上的
             if (!"0.0.0.0/0".equals(ipKey)) {
                 hadWork = flag;
             }
         }
+        // 直接URL流控处理
         if (!hadWork) {
+            Function<QpsData, String> keyFunc = value -> {
+                var key = userContext.loginStatus() ? userContext.currentUserId() : userContext.getDuid();
+                if (value.getTarget() == RateLimiterApiTarget.ip) {
+                    key = ip;
+                }
+                return key;
+            };
+            Function<QpsData, String> nsFunc = value -> MD5Util.MD5Encode(req.getRequestURI());
             var urlData = getQpsConfig().getUrlData();
             // url通配限制
-            var value = urlData.get("*");
+            var list = urlData.get("*");
             if (!requestIgnoreRateLimiter(RateLimiterStep.url, "*", request, handler)) {
-                urlQps(urlData, value, ip, req, handler, null, releaseList);
+                qps(urlData, list, "URL_QPS_ALL", keyFunc, nsFunc, releaseList);
             }
             // 指定url的QPS控制
-            value = uriVal(urlData, req.getRequestURI(), false);
+            list = uriVal(urlData, req.getRequestURI());
             if (!requestIgnoreRateLimiter(RateLimiterStep.url, req.getRequestURI(), request, handler)) {
-                hadWork = urlQps(urlData, value, ip, req, handler, null, releaseList);
+                hadWork = qps(urlData, list, "URL_QPS", keyFunc, nsFunc, releaseList);
             }
         }
         return hadWork;
@@ -157,100 +223,34 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
         return true;
     }
 
-
-    /**
-     * @param clientData
-     * @param path
-     * @param key
-     * @throws QPSFailException
-     * @throws InterruptedException
-     */
-    public boolean clientWord(Map<String, QpsData> clientData, String path, String key, String groupKey, String group, List<QpsData> releaseList) throws QPSFailException, InterruptedException {
-        if (clientData == null) return false;
-        // 通用接口QPS流控限制
-        var value = clientData.get("*");
-        if (value != null) {
-            RateLimiterBean rateLimiter = this.getBean(value.getBean());
-            var k = value.getTarget() == RateLimiterApiTarget.ip ? groupKey : key;
-            // 一秒后才会产生最大令牌数的令牌
-            try {
-                rateLimiter.acquire(value.toParams().setKey(k).setNamespace(value.getNamespace(group)));
-                if (value.isNeedRelease()) {
-                    var cp = value.copy(k);
-                    cp.setNamespace(value.getNamespace(group));
-                    releaseList.add(cp);
-                }
-            } catch (QPSFailException e) {
-                throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage(), e.getParams());
-            }
-        }
-        // 判断客户端当前接口是否达到上限
-        value = uriVal(clientData, path, false);
-        String namespace = null;
-        if (value != null && value.getNamespace() != null) {
-            // URI固定分配空间
-            namespace = value.getNamespace();
-            var nvalue = uriVal(clientData, value.getNamespace(), true);
-            // 如果uri设定的空间名没设置QPS数据 直接使用uri设置的数据
-            if (nvalue != null) value = nvalue;
-        }
-        if (value != null && value.getMaxRate() > 0) {
-            if (namespace == null) {
-                // 每个URI分配一个空间
-                namespace = MD5Util.MD5Encode(path);
-            }
-            RateLimiterBean rateLimiter = this.getBean(value.getBean());
-            var k = value.getTarget() == RateLimiterApiTarget.ip ? groupKey : key;
-            try {
-                var ns = String.format("%s:%s", group, namespace);
-                rateLimiter.acquire(value.toParams().setKey(k).setNamespace(ns));
-                if (value.isNeedRelease()) {
-                    var cp = value.copy(k);
-                    cp.setNamespace(ns);
-                    releaseList.add(cp);
-                }
-            } catch (QPSFailException e) {
-                throw new QPSFailException(value.getLimitType() == RateLimitType.system, value.getRejectMessage(), e.getParams());
-            }
-        }
-        return true;
-    }
-
-
-    protected boolean urlQps(Map<String, LinkedList<QpsData>> urlData,
-                             LinkedList<QpsData> list, String ip, HttpServletRequest req, HandlerMethod handler, String namespace, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
+    public boolean qps(Map<String, LinkedList<QpsData>> urlData, LinkedList<QpsData> list, String group, Function<QpsData, String> keyFunc, Function<QpsData, String> nsFunc, List<QpsData> releaseList) throws InterruptedException, QPSFailException {
         var hadWork = false;
         if (list != null) {
             // 基于配置文件的QPS控制已经处理，设置信号让基于注解的处理无效  数组为空表示这个接口放行
             hadWork = true;
             for (var value : list) {
-                RateLimiterBean rateLimiter = this.getBean(value.getBean());
-                namespace = value.getNamespace() == null ? namespace : value.getNamespace();
-                var key = userContext.loginStatus() ? userContext.currentUserId() : userContext.getDuid();
-                if (value.getTarget() == RateLimiterApiTarget.ip) {
-                    key = ip;
-                } else if (value.getTarget() == RateLimiterApiTarget.namespace) {
+                var rateLimiter = this.getBean(value.getBean());
+                var namespace = value.getNamespace() == null ? nsFunc.apply(value) : value.getNamespace();
+                var key = keyFunc.apply(value);
+                if (value.getTarget() == RateLimiterApiTarget.namespace) {
                     key = namespace;
                     // 空间名配置掉了时返回没有处理过
                     if (StrUtil.isEmpty(key)) return false;
-                }
-                if (StrUtil.isEmpty(namespace)) {
-                    namespace = MD5Util.MD5Encode(req.getRequestURI());
                 }
                 // 只有当前没设置maxRate时才当做指定namespace的策略限制
                 else if (value.getMaxRate() == 0) {
                     var nameList = urlData.get(namespace);
                     if (nameList != null) {
-                        return urlQps(urlData, nameList, ip, req, handler, namespace, releaseList);
+                        return qps(urlData, nameList, group, keyFunc, v -> namespace, releaseList);
                     }
                 }
                 try {
-                    namespace = "URL_QPS:" + namespace;
-                    var params = value.toParams().setKey(key).setNamespace(namespace);
+                    var ns = String.format("%s:%s", group, namespace);
+                    var params = value.toParams().setKey(key).setNamespace(ns);
                     rateLimiter.acquire(params);
                     if (value.isNeedRelease()) {
                         var cp = value.copy(key);
-                        cp.setNamespace(namespace);
+                        cp.setNamespace(ns);
                         releaseList.add(cp);
                     }
                 } catch (QPSFailException e) {
@@ -261,18 +261,7 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
         return hadWork;
     }
 
-
-    /**
-     * 非空间名获取时只匹配已/开头的配置
-     *
-     * @param data
-     * @param key
-     * @param namespace
-     * @param <T>
-     * @return
-     */
-    protected static <T> T uriVal(Map<String, T> data, String key, boolean namespace) {
-        if (namespace) return data.get(key);
+    public static <T> T uriVal(Map<String, T> data, String key) {
         var matcher = getMatcher(data);
         return matcher.lookup(key);
     }

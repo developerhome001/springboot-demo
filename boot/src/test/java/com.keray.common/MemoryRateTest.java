@@ -20,13 +20,13 @@ public class MemoryRateTest {
         for (var i = 0; i < cnt; i++) {
             rateLimiterBean.acquire(new RateLimiterParams()
                     .setMaxRate(1)
-                    .setMillisecond(10)
+                    .setMillisecond(1000)
                     .setRejectStrategy(RejectStrategy.wait)
-                    .setWaitTime(200)
+                    .setWaitTime(1000)
                     .setWaitSpeed(1)
             );
-            int finalI = i;
-            System.out.println(System.currentTimeMillis() + "  " + finalI);
+            System.out.println(System.currentTimeMillis() + "  " + i);
+            latch.countDown();
         }
         latch.await();
     }
