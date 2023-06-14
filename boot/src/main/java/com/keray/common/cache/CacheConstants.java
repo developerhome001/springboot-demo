@@ -1,58 +1,21 @@
 package com.keray.common.cache;
 
+import cn.hutool.core.map.MapUtil;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+import javax.annotation.PostConstruct;
+import java.util.Map;
+
 /**
  * @author by keray
  * date:2019/8/30 13:01
  */
-public final class CacheConstants {
-
-    /**
-     * "缓存类型1，大对象，实时性高，更新率高"
-     */
-    @Deprecated
-    public static final String BIG_UP_UP = "cache:big_up_up";
-    /**
-     * "缓存类型1，大对象，实时性高，更新率低"
-     */
-    @Deprecated
-    public static final String BIG_UP_LOW = "cache:big_up_low";
-    /**
-     * "缓存类型1，大对象，实时性低，更新率高"
-     */
-    @Deprecated
-    public static final String BIG_LOW_UP = "cache:big_low_up";
-    /**
-     * "缓存类型1，大对象，实时性低，更新率低"
-     */
-    @Deprecated
-    public static final String BIG_LOW_LOW = "cache:big_low_low";
-
-    /**
-     * "缓存类型1，小对象，实时性高，更新率高"
-     */
-    @Deprecated
-    public static final String SMALL_UP_UP = "cache:small_up_up";
-    /**
-     * "缓存类型1，小对象，实时性高，更新率低"
-     */
-    @Deprecated
-    public static final String SMALL_UP_LOW = "cache:small_up_low";
-    /**
-     * "缓存类型1，小对象，实时性低，更新率高"
-     */
-    @Deprecated
-    public static final String SMALL_LOW_UP = "cache:small_low_up";
-    /**
-     * "缓存类型1，小对象，实时性低，更新率低"
-     */
-    @Deprecated
-    public static final String SMALL_LOW_LOW = "cache:small_low_low";
-
-    /**
-     * "缓存类型1，大对象，实时性高，更新率低"
-     */
-    @Deprecated
-    public static final String TREE_DATA_CACHE = "cache:tree_data_cache";
+@ConfigurationProperties(prefix = "keray.cache")
+@Configuration
+public class CacheConstants {
 
     public static final String S10 = "s10";
     public static final String S30 = "s30";
@@ -69,4 +32,35 @@ public final class CacheConstants {
     public static final String ALWAYS = "ALWAYS";
 
 
+    @Getter
+    @Setter
+    private Map<String, Long> map;
+
+    private final Map<String, Long> DEFAULT = MapUtil.<String, Long>builder()
+            .put(S10, 10000L)
+            .put(S30, 30000L)
+            .put(M1, 60000L)
+            .put(M10, 600000L)
+            .put(M30, 1800000L)
+            .put(H1, 3600000L)
+            .put(H10, 36000000L)
+            .put(D1, 86400000L)
+            .put(D5, 432000000L)
+            .put(D10, 864000000L)
+            .put(D30, 2592000000L)
+            .put(Y1, 31536000000L)
+            .put(ALWAYS, -1L)
+            .build();
+
+    @PostConstruct
+    public void init() {
+        if (map == null) {
+            map = DEFAULT;
+        }
+        for (var item : DEFAULT.entrySet()) {
+            if (!map.containsKey(item.getKey())) {
+                map.put(item.getKey(), item.getValue());
+            }
+        }
+    }
 }

@@ -37,8 +37,6 @@ spring:
       time: HH:mm:ss
   cache:
     type: redis
-    ehcache:
-      config: classpath:baseEhcache.xml
     redis:
       key-prefix: cache
   data:
