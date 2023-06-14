@@ -109,7 +109,7 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
             Function<QpsData, String> nsFunc = value -> customRes.getNamespace() == null ? MD5Util.MD5Encode(req.getRequestURI()) : customRes.getNamespace();
             var urlData = customRes.getValue();
             var list = urlData.get("*");
-            hadWork = qps(urlData, list, "CUS_QPS_ALL", v -> customRes.getKey(), nsFunc, releaseList);
+            hadWork = qps(urlData, list, "CUS_QPS_ALL", v -> customRes.getKey(), v -> "NS", releaseList);
             var f = qps(urlData, list, "CUS_QPS", v -> customRes.getKey(), nsFunc, releaseList);
             hadWork = hadWork || f;
         }
@@ -141,15 +141,14 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
                 }
                 return key;
             };
-            Function<QpsData, String> nsFunc = value -> MD5Util.MD5Encode(req.getRequestURI());
             var flag = false;
             if (!requestIgnoreRateLimiter(RateLimiterStep.url, "*", request, handler)) {
-                flag = qps(ipData, list, "IP_QPS_ALL", keyFunc, nsFunc, releaseList);
+                flag = qps(ipData, list, "IP_QPS_ALL", keyFunc, v -> "NS", releaseList);
             }
             // 指定url的QPS控制
             list = uriVal(ipData, req.getRequestURI());
             if (!requestIgnoreRateLimiter(RateLimiterStep.url, req.getRequestURI(), request, handler)) {
-                var f = qps(ipData, list, "IP_QPS", keyFunc, nsFunc, releaseList);
+                var f = qps(ipData, list, "IP_QPS", keyFunc, value -> MD5Util.MD5Encode(req.getRequestURI()), releaseList);
                 flag = flag || f;
             }
             // 不是通用ip匹配上的
@@ -166,17 +165,16 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
                 }
                 return key;
             };
-            Function<QpsData, String> nsFunc = value -> MD5Util.MD5Encode(req.getRequestURI());
             var urlData = getQpsConfig().getUrlData();
             // url通配限制
             var list = urlData.get("*");
             if (!requestIgnoreRateLimiter(RateLimiterStep.url, "*", request, handler)) {
-                qps(urlData, list, "URL_QPS_ALL", keyFunc, nsFunc, releaseList);
+                qps(urlData, list, "URL_QPS_ALL", keyFunc, v -> "NS", releaseList);
             }
             // 指定url的QPS控制
             list = uriVal(urlData, req.getRequestURI());
             if (!requestIgnoreRateLimiter(RateLimiterStep.url, req.getRequestURI(), request, handler)) {
-                hadWork = qps(urlData, list, "URL_QPS", keyFunc, nsFunc, releaseList);
+                hadWork = qps(urlData, list, "URL_QPS", keyFunc, value -> MD5Util.MD5Encode(req.getRequestURI()), releaseList);
             }
         }
         return hadWork;
