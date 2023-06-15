@@ -13,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -45,39 +43,6 @@ public class AliyunSmsPlugins extends AliyunPlugins implements SmsPlugins, IPlug
         config.setEndpoint(smsConfig.getEndpoint());
         client = new Client(config);
     }
-
-
-    @Override
-    public SmsStatus send(String phone, Map<String, Object> data) {
-        return send(Collections.singletonList(phone), data).get(0).getStatus();
-    }
-
-    @Override
-    public Future<SmsStatus> sendAsync(String phone, Map<String, Object> data) {
-        return SysThreadPool.submit(() -> sendAsync(Collections.singletonList(phone), data).get(0).get().getStatus());
-    }
-
-    @Override
-    public void sendCall(String phone, Map<String, Object> data, SmsSendCallback callback) {
-        sendCall(Collections.singletonList(phone), data, callback);
-    }
-
-    @Override
-    public List<SmsSendResult> send(List<String> phoneList, Map<String, Object> data) {
-        List<SmsSendResult> results = new ArrayList<>(phoneList.size() + 1);
-        List<Future<SmsSendResult>> future = sendAsync(phoneList, data);
-        for (int i = 0; i < future.size(); i++) {
-            try {
-                SmsSendResult result = future.get(i).get();
-                results.add(result);
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("短信发送失败 mobile:" + phoneList.get(i), e);
-                results.add(new SmsSendResult(phoneList.get(i), SmsStatus.fail));
-            }
-        }
-        return results;
-    }
-
     @Override
     public List<Future<SmsSendResult>> sendAsync(List<String> phoneList, Map<String, Object> data) {
         try {
@@ -113,16 +78,5 @@ public class AliyunSmsPlugins extends AliyunPlugins implements SmsPlugins, IPlug
         }
     }
 
-    @Override
-    public void sendCall(List<String> phoneList, Map<String, Object> data, SmsSendCallback callback) {
-        List<Future<SmsSendResult>> future = sendAsync(phoneList, data);
-        future.forEach(f -> {
-            try {
-                SmsSendResult result = f.get();
-                callback.applay(result.getStatus(), result.getPhone());
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("短信验--not go there", e);
-            }
-        });
-    }
+
 }

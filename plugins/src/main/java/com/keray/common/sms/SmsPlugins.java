@@ -1,11 +1,13 @@
 package com.keray.common.sms;
 
-import com.keray.common.exception.BizException;
+import com.keray.common.threadpool.SysThreadPool;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 
 /**
  * @author by keray
@@ -24,11 +26,18 @@ public interface SmsPlugins {
      * @return <p> {@link SmsStatus} </p>
      * @throws
      */
-    SmsStatus send(String phone, Map<String, Object> data);
+    default SmsStatus send(String phone, Map<String, Object> data) {
+        return send(List.of(phone), data).get(0).getStatus();
+    }
 
-    Future<SmsStatus> sendAsync(String phone, Map<String, Object> data);
 
-    void sendCall(String phone, Map<String, Object> data, SmsSendCallback callback);
+    default void sendCall(String phone, Map<String, Object> data, BiConsumer<SmsStatus, String> callback) {
+        sendCall(List.of(phone), data, callback);
+    }
+
+    default Future<SmsStatus> sendAsync(String phone, Map<String, Object> data) {
+        return SysThreadPool.submit(() -> sendAsync(List.of(phone), data).get(0).get().getStatus());
+    }
 
     /**
      * <p>
@@ -41,9 +50,32 @@ public interface SmsPlugins {
      * @return <p> {@link List<SmsSendResult>} </p>
      * @throws
      */
-    List<SmsSendResult> send(List<String> phoneList, Map<String, Object> data);
+    default List<SmsSendResult> send(List<String> phoneList, Map<String, Object> data) {
+        var result = sendAsync(phoneList, data);
+        var res = new LinkedList<SmsSendResult>();
+        for (var i = 0; i < result.size(); i++) {
+            var f = result.get(i);
+            try {
+                res.add(f.get());
+            } catch (InterruptedException | ExecutionException e) {
+                res.add(new SmsSendResult(phoneList.get(i), SmsStatus.fail));
+            }
+        }
+        return res;
+    }
+
+    default void sendCall(List<String> phoneList, Map<String, Object> data, BiConsumer<SmsStatus, String> callback) {
+        var result = sendAsync(phoneList, data);
+        for (var i = 0; i < phoneList.size(); i++) {
+            var f = result.get(i);
+            try {
+                var fu = f.get();
+                callback.accept(fu.getStatus(), fu.getPhone());
+            } catch (InterruptedException | ExecutionException e) {
+                callback.accept(SmsStatus.fail, phoneList.get(i));
+            }
+        }
+    }
 
     List<Future<SmsSendResult>> sendAsync(List<String> phoneList, Map<String, Object> data);
-
-    void sendCall(List<String> phoneList, Map<String, Object> data, SmsSendCallback callback) ;
 }
