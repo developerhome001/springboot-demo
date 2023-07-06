@@ -43,6 +43,8 @@ public class ApiLogServletInvocableHandlerPipeline implements ServletInvocableHa
     @Resource
     private IUserContext userContext;
 
+    public final static String API_LOG_IGNORE = "API_LOG_IGNORE";
+
     @Getter
     @Setter
     private Boolean all = false;
@@ -62,6 +64,7 @@ public class ApiLogServletInvocableHandlerPipeline implements ServletInvocableHa
         }
         Consumer<Object> logFail = result -> {
             try {
+                if (workContext.containsKey(API_LOG_IGNORE)) return;
                 var data = handlerMethod.getMethodAnnotation(ApiLogIgnore.class);
                 if (result instanceof Result.FailResult || result instanceof Exception || (data == null && all) || data != null && !data.value()) {
                     String url = null;
