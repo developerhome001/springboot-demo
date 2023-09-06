@@ -1,6 +1,7 @@
 package com.keray.common.utils;
 
-import org.apache.commons.lang3.StringUtils;
+
+import cn.hutool.core.util.StrUtil;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -59,11 +60,11 @@ public class IPUtil {
     }
 
     public static String[] splitIPPortStr(String str) {
-        if (StringUtils.isBlank(str)) {
+        if (StrUtil.isBlank(str)) {
             throw new IllegalArgumentException("ip and port string cannot be empty!");
         } else {
             String[] serverAddrArr;
-            if (str.startsWith("[") && StringUtils.containsIgnoreCase(str, "]")) {
+            if (str.startsWith("[") && StrUtil.containsIgnoreCase(str, "]")) {
                 if (str.endsWith("]")) {
                     serverAddrArr = new String[]{str};
                 } else {
@@ -89,11 +90,11 @@ public class IPUtil {
     }
 
     public static String getIPFromString(String str) {
-        if (StringUtils.isBlank(str)) {
+        if (StrUtil.isBlank(str)) {
             return "";
         } else {
             String result = "";
-            if (StringUtils.containsIgnoreCase(str, "[") && StringUtils.containsIgnoreCase(str, "]")) {
+            if (StrUtil.containsIgnoreCase(str, "[") && StrUtil.containsIgnoreCase(str, "]")) {
                 result = str.substring(str.indexOf("["), str.indexOf("]") + 1);
                 if (!isIPv6(result)) {
                     result = "";

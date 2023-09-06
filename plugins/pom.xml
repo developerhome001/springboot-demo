@@ -6,7 +6,7 @@
     <parent>
         <artifactId>dependencies</artifactId>
         <groupId>com.keray.spring</groupId>
-        <version>1.4.6</version>
+        <version>1.4.7</version>
     </parent>
     <artifactId>plugins</artifactId>
 
