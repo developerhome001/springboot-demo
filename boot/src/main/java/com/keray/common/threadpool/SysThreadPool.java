@@ -99,8 +99,11 @@ public class SysThreadPool {
             Map<String, Object> data = getContext().export();
             threadPoolExecutor.execute(() -> {
                 userContext.importConf(data);
-                runnable.run();
-                userContext.clear();
+                try {
+                    runnable.run();
+                } finally {
+                    userContext.clear();
+                }
             });
         } else {
             threadPoolExecutor.execute(runnable);
@@ -117,8 +120,11 @@ public class SysThreadPool {
             Map<String, Object> data = getContext().export();
             return threadPoolExecutor.submit(() -> {
                 userContext.importConf(data);
-                runnable.run();
-                userContext.clear();
+                try {
+                    runnable.run();
+                } finally {
+                    userContext.clear();
+                }
             });
         } else {
             return threadPoolExecutor.submit(runnable);
@@ -135,9 +141,11 @@ public class SysThreadPool {
             Map<String, Object> data = getContext().export();
             return threadPoolExecutor.submit(() -> {
                 userContext.importConf(data);
-                T t = task.call();
-                userContext.clear();
-                return t;
+                try {
+                    return task.call();
+                } finally {
+                    userContext.clear();
+                }
             });
         } else {
             return threadPoolExecutor.submit(task);
