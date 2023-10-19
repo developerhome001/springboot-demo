@@ -41,7 +41,7 @@ import java.util.*;
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnProperty(name = "keray.api.json.open", havingValue = "true")
+@ConditionalOnProperty(name = "keray.api.json.open", havingValue = "true", matchIfMissing = true)
 @ConfigurationProperties(value = "keray.api.json", ignoreInvalidFields = true)
 public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor implements KerayHandlerMethodArgumentResolver {
 
