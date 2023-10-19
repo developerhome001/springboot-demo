@@ -16,7 +16,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
 import javax.annotation.Resource;
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,12 +31,15 @@ import java.io.IOException;
 @Configuration
 @ConditionalOnBean(value = IUserContext.class)
 @Order(Integer.MIN_VALUE)
-public class BaseMessageFilter implements Filter {
+public class BaseMessageFilter extends KerayFilter {
     // 设备uuid
     public static final String TOKEN_DEVICE_UUID_KEY = "duid";
 
     @Resource
     private IUserContext<?> userContext;
+
+    @Resource
+    private ApplicationContext applicationContext;
 
 
     private final DuidGenerate duidGenerate;
@@ -44,21 +48,30 @@ public class BaseMessageFilter implements Filter {
         this.duidGenerate = duidGenerate.getIfAvailable(() -> UUIDUtil::generateUUIDByTimestamp);
     }
 
-
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        if (request instanceof HttpServletRequest httpServletRequest) {
+    protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        try {
             // 设置request上下文
             userContext.setCurrentRequest(httpServletRequest);
             // 设置当前id
             userContext.setIp(HttpContextUtil.getIp(httpServletRequest));
             var duid = getRequestUUID(httpServletRequest);
             if (StrUtil.isEmpty(duid)) {
-                duid = generateBrowserUUID((HttpServletResponse) response);
+                duid = generateBrowserUUID(response);
             }
             userContext.setDUid(duid);
+            filterChain.doFilter(httpServletRequest, response);
+        } finally {
+            var beans = applicationContext.getBeansOfType(ThreadCacheContext.class);
+            for (var bean : beans.values()) {
+                try {
+                    bean.clear();
+                } catch (Exception e) {
+                    log.error("清除threadLocalContext失败", e);
+                }
+            }
+            MybatisPlusContext.remove();
         }
-        chain.doFilter(request, response);
     }
 
     public String getRequestUUID(HttpServletRequest request) {

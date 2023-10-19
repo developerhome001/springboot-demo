@@ -12,7 +12,6 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
-import com.keray.common.IUserContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -24,7 +23,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.annotation.Resource;
@@ -46,8 +44,6 @@ public class SpringMvcConfig implements WebMvcConfigurer {
     @Resource
     private Jackson2ObjectMapperBuilder builder;
 
-    @Resource
-    private ContextCleanInterceptorRegistry contextCleanInterceptorRegistry;
 
     /**
      * 默认日期时间格式
@@ -62,10 +58,6 @@ public class SpringMvcConfig implements WebMvcConfigurer {
      */
     public static final String DEFAULT_TIME_FORMAT = "HH:mm:ss";
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(contextCleanInterceptorRegistry);
-    }
 
     /**
      * Json序列化和反序列化转换器，用于转换Post请求体中的json以及将我们的对象序列化为返回响应的json
