@@ -37,8 +37,6 @@ public class BaseMessageFilter implements Filter {
     @Resource
     private IUserContext<?> userContext;
 
-    @Resource
-    private ApplicationContext applicationContext;
 
     private final DuidGenerate duidGenerate;
 
@@ -49,31 +47,18 @@ public class BaseMessageFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        try {
-            if (request instanceof HttpServletRequest httpServletRequest) {
-                // 设置request上下文
-                userContext.setCurrentRequest(httpServletRequest);
-                // 设置当前id
-                userContext.setIp(HttpContextUtil.getIp(httpServletRequest));
-                var duid = getRequestUUID(httpServletRequest);
-                if (StrUtil.isEmpty(duid)) {
-                    duid = generateBrowserUUID((HttpServletResponse) response);
-                }
-                userContext.setDUid(duid);
+        if (request instanceof HttpServletRequest httpServletRequest) {
+            // 设置request上下文
+            userContext.setCurrentRequest(httpServletRequest);
+            // 设置当前id
+            userContext.setIp(HttpContextUtil.getIp(httpServletRequest));
+            var duid = getRequestUUID(httpServletRequest);
+            if (StrUtil.isEmpty(duid)) {
+                duid = generateBrowserUUID((HttpServletResponse) response);
             }
-            chain.doFilter(request, response);
-            userContext.clear();
-        } finally {
-            var beans = applicationContext.getBeansOfType(ThreadCacheContext.class);
-            for (var bean: beans.values()) {
-                try {
-                    bean.clear();
-                }catch (Exception e) {
-                    log.error("清除threadLocalContext失败", e);
-                }
-            }
-            MybatisPlusContext.remove();
+            userContext.setDUid(duid);
         }
+        chain.doFilter(request, response);
     }
 
     public String getRequestUUID(HttpServletRequest request) {

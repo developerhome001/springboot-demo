@@ -59,6 +59,11 @@ public class SpringMvcConfig implements WebMvcConfigurer {
      */
     public static final String DEFAULT_TIME_FORMAT = "HH:mm:ss";
 
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+
+    }
+
     /**
      * Json序列化和反序列化转换器，用于转换Post请求体中的json以及将我们的对象序列化为返回响应的json
      */
