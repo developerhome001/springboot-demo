@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -42,7 +41,6 @@ import java.util.*;
 @Slf4j
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name = "keray.api.json.open", havingValue = "true", matchIfMissing = true)
-@ConfigurationProperties(value = "keray.api.json", ignoreInvalidFields = true)
 public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor implements KerayHandlerMethodArgumentResolver {
 
     private final HandlerMethodArgumentResolverComposite resolverComposite;
@@ -52,6 +50,7 @@ public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor imp
      */
     @Setter
     @Getter
+    @Deprecated
     private Boolean globalSwitch = true;
     @Setter
     @Getter
@@ -95,14 +94,10 @@ public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor imp
                 }
             }
             // 对于RequestBody注解的方法不做处理
-            if (globalSwitch) {
-                if (apiJsonParam != null) {
-                    result = apiJsonParam.value() && parameter.getParameterAnnotation(RequestBody.class) == null;
-                } else {
-                    result = !haveBody;
-                }
+            if (apiJsonParam != null) {
+                result = apiJsonParam.value() && parameter.getParameterAnnotation(RequestBody.class) == null;
             } else {
-                result = !haveBody && apiJsonParam != null && apiJsonParam.value();
+                result = !haveBody;
             }
         }
         threadLocal.put(key, result);
