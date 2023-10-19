@@ -6,7 +6,7 @@
     <groupId>com.keray.spring</groupId>
     <artifactId>dependencies</artifactId>
 
-    <version>1.5.1</version>
+    <version>1.5.2</version>
 
     <packaging>pom</packaging>
 
@@ -24,7 +24,7 @@
         <rocketmq-version>2.2.0</rocketmq-version>
         <project.mybatis-plus>3.5.1.K</project.mybatis-plus>
         <project.redisson>3.16.7</project.redisson>
-        <keray-version>1.5.1</keray-version>
+        <keray-version>1.5.2</keray-version>
     </properties>
 
     <dependencyManagement>
