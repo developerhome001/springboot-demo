@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -41,17 +42,14 @@ import java.util.*;
 @Slf4j
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name = "keray.api.json.open", havingValue = "true", matchIfMissing = true)
+@ConfigurationProperties(value = "keray.api.json", ignoreInvalidFields = true)
 public class ApiJsonParamResolver extends RequestResponseBodyMethodProcessor implements KerayHandlerMethodArgumentResolver {
 
     private final HandlerMethodArgumentResolverComposite resolverComposite;
 
     /**
-     * 全局开关 全局开发打开意味着改装载器会处理所有application/json请求的方法，不开启全局开关时仅当方法具有@ApiJsonParam(value = true)时有效
+     * 无意义 只是作为yml的自动补全
      */
-    @Setter
-    @Getter
-    @Deprecated
-    private Boolean globalSwitch = true;
     @Setter
     @Getter
     private Boolean open = true;
