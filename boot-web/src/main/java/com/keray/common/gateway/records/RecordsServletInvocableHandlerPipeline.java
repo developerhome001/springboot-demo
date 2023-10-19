@@ -40,7 +40,7 @@ public class RecordsServletInvocableHandlerPipeline implements ServletInvocableH
         HttpServletRequest req = request.getNativeRequest(HttpServletRequest.class);
         RecordsContext context = new RecordsContext();
         int status = gatewayRecords.support(handlerMethod, req, context);
-        if (status == 0 || req == null) return callback.get();
+        if (status == 0 || req == null || handlerMethod.hasMethodAnnotation(RecordsIgnore.class)) return callback.get();
         long startTime = System.currentTimeMillis();
         Object result = callback.get();
         long endTime = System.currentTimeMillis();
