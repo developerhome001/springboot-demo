@@ -46,6 +46,9 @@ public class SpringMvcConfig implements WebMvcConfigurer {
     @Resource
     private Jackson2ObjectMapperBuilder builder;
 
+    @Resource
+    private ContextCleanInterceptorRegistry contextCleanInterceptorRegistry;
+
     /**
      * 默认日期时间格式
      */
@@ -61,7 +64,7 @@ public class SpringMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-
+        registry.addInterceptor(contextCleanInterceptorRegistry);
     }
 
     /**
