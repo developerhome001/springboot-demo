@@ -227,19 +227,24 @@ public class AbstractRateLimiterInterceptor implements RateLimiterInterceptor {
             // 基于配置文件的QPS控制已经处理，设置信号让基于注解的处理无效  数组为空表示这个接口放行
             hadWork = true;
             for (var value : list) {
+                hadWork = true;
                 var rateLimiter = this.getBean(value.getBean());
                 var namespace = value.getNamespace() == null ? nsFunc.apply(value) : value.getNamespace();
                 var key = keyFunc.apply(value);
                 if (value.getTarget() == RateLimiterApiTarget.namespace) {
                     key = namespace;
                     // 空间名配置掉了时返回没有处理过
-                    if (StrUtil.isEmpty(key)) return false;
+                    if (StrUtil.isEmpty(key)) {
+                        hadWork = false;
+                        continue;
+                    }
                 }
                 // 只有当前没设置maxRate时才当做指定namespace的策略限制
                 else if (value.getMaxRate() == 0) {
                     var nameList = urlData.get(namespace);
                     if (nameList != null) {
-                        return qps(urlData, nameList, group, keyFunc, v -> namespace, releaseList);
+                        qps(urlData, nameList, group, keyFunc, v -> namespace, releaseList);
+                        continue;
                     }
                 }
                 try {
