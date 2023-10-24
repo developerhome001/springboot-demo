@@ -23,6 +23,8 @@ public class Result<T> implements Serializable {
      */
     private boolean apiDown;
 
+    private Object extend;
+
     protected Integer code;
 
 
