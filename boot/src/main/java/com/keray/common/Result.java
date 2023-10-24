@@ -16,6 +16,8 @@ import java.util.function.Supplier;
 @Slf4j
 public class Result<T> implements Serializable {
 
+    public static Supplier<Object> extendFunction = null;
+
     private String message;
 
     /**
@@ -30,6 +32,12 @@ public class Result<T> implements Serializable {
 
     protected T data;
 
+    private Result() {
+        if (extendFunction != null) {
+            this.extend = extendFunction.get();
+        }
+    }
+
     public Boolean getSuccess() {
         return code == CommonResultCode.ok.getCode();
     }
@@ -39,6 +47,7 @@ public class Result<T> implements Serializable {
     @NoArgsConstructor
     public static class SuccessResult<T> extends Result<T> {
         SuccessResult(T data) {
+            super();
             this.code = CommonResultCode.ok.getCode();
             this.data = data;
         }
@@ -50,6 +59,10 @@ public class Result<T> implements Serializable {
     public static class FailResult<E extends Throwable, T> extends Result<T> {
         @JsonIgnore
         private E error;
+
+        public FailResult() {
+            super();
+        }
     }
 
     public static <E extends Throwable, T> FailResult<E, T> fail(T data, Integer errorCode, String errorMsg, E e) {
