@@ -90,45 +90,6 @@ public interface IBMapper<T extends IBEntity<T>> extends BaseMapper<T> {
     }
 
     /**
-     * 插入一条记录
-     *
-     * @param entity 实体对象
-     */
-    int insert(T entity);
-
-
-    /**
-     * 根据 columnMap 条件，删除记录
-     *
-     * @param columnMap 表字段 map 对象
-     */
-    int deleteByMap(@Param(Constants.COLUMN_MAP) Map<String, Object> columnMap);
-
-    /**
-     * 根据 entity 条件，删除记录
-     *
-     * @param queryWrapper 实体对象封装操作类（可以为 null,里面的 entity 用于生成 where 语句）
-     */
-    int delete(@Param(Constants.WRAPPER) Wrapper<T> queryWrapper);
-
-
-    /**
-     * 根据 whereEntity 条件，更新记录
-     *
-     * @param entity        实体对象 (set 条件值,可以为 null)
-     * @param updateWrapper 实体对象封装操作类（可以为 null,里面的 entity 用于生成 where 语句）
-     */
-    int update(@Param(Constants.ENTITY) T entity, @Param(Constants.WRAPPER) Wrapper<T> updateWrapper);
-
-
-    /**
-     * 查询（根据 columnMap 条件）
-     *
-     * @param columnMap 表字段 map 对象
-     */
-    List<T> selectByMap(@Param(Constants.COLUMN_MAP) Map<String, Object> columnMap);
-
-    /**
      * 根据 entity 条件，查询一条记录
      *
      * @param queryWrapper 实体对象封装操作类（可以为 null）
@@ -154,20 +115,6 @@ public interface IBMapper<T extends IBEntity<T>> extends BaseMapper<T> {
     }
 
     /**
-     * 根据 Wrapper 条件，查询总记录数
-     *
-     * @param queryWrapper 实体对象封装操作类（可以为 null）
-     */
-    Long selectCount(@Param(Constants.WRAPPER) Wrapper<T> queryWrapper);
-
-    /**
-     * 根据 entity 条件，查询全部记录
-     *
-     * @param queryWrapper 实体对象封装操作类（可以为 null）
-     */
-    List<T> selectList(@Param(Constants.WRAPPER) Wrapper<T> queryWrapper);
-
-    /**
      * 根据 entity 条件，查询全部记录
      *
      * @param queryWrapper 实体对象封装操作类（可以为 null）
@@ -175,38 +122,6 @@ public interface IBMapper<T extends IBEntity<T>> extends BaseMapper<T> {
     default List<T> selectList(@Param(Constants.WRAPPER) Wrapper<T> queryWrapper, int size) {
         return this.selectPage(new Page<>(1, size), queryWrapper).getRecords();
     }
-
-    /**
-     * 根据 Wrapper 条件，查询全部记录
-     *
-     * @param queryWrapper 实体对象封装操作类（可以为 null）
-     */
-    List<Map<String, Object>> selectMaps(@Param(Constants.WRAPPER) Wrapper<T> queryWrapper);
-
-    /**
-     * 根据 Wrapper 条件，查询全部记录
-     * <p>注意： 只返回第一个字段的值</p>
-     *
-     * @param queryWrapper 实体对象封装操作类（可以为 null）
-     */
-    List<Object> selectObjs(@Param(Constants.WRAPPER) Wrapper<T> queryWrapper);
-
-    /**
-     * 根据 entity 条件，查询全部记录（并翻页）
-     *
-     * @param page         分页查询条件（可以为 RowBounds.DEFAULT）
-     * @param queryWrapper 实体对象封装操作类（可以为 null）
-     */
-    <E extends IPage<T>> E selectPage(E page, @Param(Constants.WRAPPER) Wrapper<T> queryWrapper);
-
-    /**
-     * 根据 Wrapper 条件，查询全部记录（并翻页）
-     *
-     * @param page         分页查询条件
-     * @param queryWrapper 实体对象封装操作类
-     */
-    <E extends IPage<Map<String, Object>>> E selectMapsPage(E page, @Param(Constants.WRAPPER) Wrapper<T> queryWrapper);
-
 
     /**
      * <p>

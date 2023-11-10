@@ -204,14 +204,6 @@ public class KerayLambdaUpdateWrapper<T extends IBEntity<T>> extends LambdaUpdat
     }
 
     @Override
-    public LambdaUpdateWrapper<T> setSql(boolean condition, String sql) {
-        if (condition && StringUtils.isNotBlank(sql)) {
-            sqlSet.add(sql);
-        }
-        return typedThis;
-    }
-
-    @Override
     public String getSqlSet() {
         if (CollectionUtils.isEmpty(sqlSet)) {
             return null;
